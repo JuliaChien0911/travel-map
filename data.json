@@ -249,6 +249,23 @@
    "closed": [],
    "note": "",
    "addr": "台南市東區青年路435號"
+  },
+  {
+   "id": "17z3wpyq3",
+   "tripId": "6mpob8ib4",
+   "name": "Black韓noodle",
+   "nameLocal": "",
+   "lat": 24.1844015,
+   "lng": 120.6443526,
+   "address": "福星北三街, 西安里, 西屯區, 水湳經貿園區, 臺中市, 407031, 臺灣",
+   "tags": [
+    "food"
+   ],
+   "hours": null,
+   "hoursText": "",
+   "closed": [],
+   "note": "",
+   "addr": "407臺中市西屯區西平里福星北三街35號"
   }
  ]
 }
