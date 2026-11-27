@@ -55,7 +55,7 @@ function locate(cb) {
 // ---------- 主畫面 ----------
 function filtered(o) {
   const t = trip(); const now = nowInTz(t.tz);
-  let ps = S.data.places.filter(p => p.tripId === S.tripId);
+  let ps = S.data.places.filter(p => p.tripId === S.tripId && p.lat != null);
   if (S.list !== 'all') ps = ps.filter(p => p.tags.includes(S.list));
   if (S.kinds.size) ps = ps.filter(p => p.tags.some(x => S.kinds.has(x)));
   ps = ps.map(p => ({ p, d: o ? dist(o, p) : null, st: statusOf(p.hours, now), m: mark(p) }));
@@ -74,7 +74,9 @@ function render() {
       <button class="btn" data-act="settings">⚙︎ 設定</button></div>`;
     return;
   }
+  if (!S.edit) S.pendingView = false;
   const o = originPt(), list = filtered(o), now = nowInTz(t.tz);
+  const pend = S.data.places.filter(p => p.tripId === t.id && p.lat == null);
   const lists = S.data.tags.filter(x => x.group === 'list');
   const used = new Set(S.data.places.filter(p => p.tripId === t.id).flatMap(p => p.tags));
   const kinds = S.data.tags.filter(x => x.group === 'kind' && (used.has(x.id) || S.kinds.has(x.id)));
@@ -106,14 +108,23 @@ function render() {
     <button class="chip ${S.radius ? 'on' : ''}" data-act="f-rad">範圍：${S.radius ? fmtDist(S.radius) + ' 內' : '不限'}</button>
     ${kinds.map(k => `<button class="chip ${S.kinds.has(k.id) ? 'on' : ''}" data-act="f-kind" data-v="${k.id}">${k.emoji} ${esc(k.label)}</button>`).join('')}
   </div>
-  <div class="bar"><span>${list.length} 間</span>
+  <div class="bar"><span>${S.pendingView ? pend.length : list.length} 間${S.edit ? ` <button class="chip ${S.pendingView ? 'on' : ''}" data-act="pend">📥 待整理 ${pend.length}</button>` : ''}</span>
     <span class="vt"><button class="${S.view === 'list' ? 'on' : ''}" data-act="view" data-v="list">清單</button><button class="${S.view === 'map' ? 'on' : ''}" data-act="view" data-v="map">地圖</button></span></div>
   <main>
-    ${S.view === 'map' ? '<div id="map"></div>' : ''}
-    <div class="cards">${list.length ? list.map(x => card(x)).join('') : `<p class="muted pad">${S.data.places.some(p => p.tripId === t.id) ? '沒有符合條件的店家，放寬一下篩選看看。' : '這趟旅程還沒有店家。' + (S.edit ? '點右下角 ＋ 新增。' : '')}</p>`}</div>
+    ${S.view === 'map' && !S.pendingView ? '<div id="map"></div>' : ''}
+    <div class="cards">${S.pendingView ? (pend.map(pcard).join('') || '<p class="muted pad">沒有待整理的店。</p>') : list.length ? list.map(x => card(x)).join('') : `<p class="muted pad">${S.data.places.some(p => p.tripId === t.id) ? '沒有符合條件的店家，放寬一下篩選看看。' : '這趟旅程還沒有店家。' + (S.edit ? '點右下角 ＋ 新增。' : '')}</p>`}</div>
   </main>
-  ${S.edit ? '<button class="fab" data-act="place-new" aria-label="新增店家">＋</button>' : ''}`;
-  if (S.view === 'map') drawMap(list, o);
+  ${S.edit ? '<button class="fab fab2" data-act="quick-new" aria-label="快速收藏">⚡</button><button class="fab" data-act="place-new" aria-label="新增店家">＋</button>' : ''}`;
+  if (S.view === 'map' && !S.pendingView) drawMap(list, o);
+}
+
+function pcard(p) {
+  return `<article class="card" data-id="${p.id}">
+    <h3 class="serif" style="font-size:19px">📥 ${esc(p.name)}</h3>
+    ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
+    <div class="r3"><button class="btn pri" data-act="place-edit">補資料</button>
+      ${p.srcUrl ? `<a class="btn" href="${esc(p.srcUrl)}" target="_blank" rel="noopener">原貼文 ↗</a>` : ''}
+      <button class="btn danger" data-act="pend-del">刪除</button></div></article>`;
 }
 
 function card({ p, d, st, m }) {
@@ -184,7 +195,7 @@ let pickMap = null;
 function renderSheet() {
   const sh = S.sheet; if (!sh) return;
   const root = $('#sheet-root'), prev = root.querySelector('.sheet')?.scrollTop || 0;
-  const body = { origin: originSheet, trips: tripsSheet, settings: settingsSheet, place: placeForm, anchor: anchorForm, trip: tripForm }[sh.type];
+  const body = { origin: originSheet, trips: tripsSheet, settings: settingsSheet, place: placeForm, anchor: anchorForm, trip: tripForm, quick: quickForm }[sh.type];
   root.innerHTML = `<div class="backdrop" data-act="close"></div><div class="sheet" role="dialog">${sh.pick ? pickHtml() : body()}</div>`;
   document.body.classList.add('noscroll');
   const sc = root.querySelector('.sheet'); if (sc) sc.scrollTop = prev;
@@ -204,7 +215,7 @@ function originSheet() {
 function tripsSheet() {
   return `<h2>選擇旅程</h2>
   ${S.data.trips.map(t => {
-    const ps = S.data.places.filter(p => p.tripId === t.id);
+    const ps = S.data.places.filter(p => p.tripId === t.id && p.lat != null);
     const near = S.gps && ps.length ? Math.min(...ps.map(p => dist(S.gps, p))) : null;
     return `<button class="opt ${t.id === S.tripId ? 'on' : ''}" data-act="trip-pick" data-v="${t.id}">📁 <span>${esc(t.name)}<small>${ps.length} 間${near != null ? `・離你最近 ${fmtDist(near)}` : ''}</small></span></button>`;
   }).join('')}
@@ -255,6 +266,7 @@ function placeForm() {
   return `<h2>${F.id ? '編輯店家' : '新增店家'}</h2>
   <label>名稱<input data-f="name" value="${esc(F.name)}" placeholder="例：一蘭 道頓堀店"></label>
   <label>當地名稱（選填）<input data-f="nameLocal" value="${esc(F.nameLocal)}"></label>
+  ${F.srcUrl ? `<p class="small"><a href="${esc(F.srcUrl)}" target="_blank" rel="noopener">看原貼文 ↗</a></p>` : ''}
   <div class="lab">位置</div>${locBlock(F)}
   <div class="lab">清單</div>
   <div class="chips wrap">${lists.map(t => `<button class="chip ${F.list === t.id ? 'on' : ''}" data-act="f-list" data-v="${t.id}">${t.emoji} ${esc(t.label)}</button>`).join('')}</div>
@@ -274,6 +286,16 @@ function hoursPreview(F) {
   if (!F.hoursText?.trim()) return '不填也可以（就不會顯示營業狀態）';
   const w = parseHours(F.hoursText, F.closed);
   return w ? '✓ 辨識為：' + summarize(w).map(esc).join('；') : '⚠︎ 看不懂這個格式，請用 11:00-22:00，或貼上 Google 地圖的營業時間';
+}
+function quickForm() {
+  const F = S.sheet.F, lists = S.data.tags.filter(t => t.group === 'list');
+  return `<h2>⚡ 快速收藏</h2><p class="muted small">先存起來，之後在「📥 待整理」再補位置和營業時間。</p>
+  <label>店名（或隨手備註）<input data-f="name" value="${esc(F.name)}" placeholder="例：台中 某某牛肉麵"></label>
+  <div class="lab">貼文連結（選填）</div>
+  <div class="row"><input data-f="srcUrl" value="${esc(F.srcUrl)}" placeholder="IG / FB / Threads 連結"><button class="btn" data-act="quick-paste">貼上</button></div>
+  <div class="lab">清單</div>
+  <div class="chips wrap">${lists.map(t => `<button class="chip ${F.list === t.id ? 'on' : ''}" data-act="f-list" data-v="${t.id}">${t.emoji} ${esc(t.label)}</button>`).join('')}</div>
+  <div class="row2b"><button class="btn pri" data-act="quick-save">收藏</button><button class="btn" data-act="close">取消</button></div>`;
 }
 function anchorForm() {
   const F = S.sheet.F;
@@ -350,7 +372,7 @@ const H = {
   'place-edit': (el, id) => {
     const p = placeOf(id), lt = p.tags.find(i => tagOf(i)?.group === 'list');
     openSheet('place', { id, name: p.name, nameLocal: p.nameLocal || '', lat: p.lat, lng: p.lng, address: p.address || '', list: lt || 'food',
-      kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', q: '' });
+      srcUrl: p.srcUrl || '', kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', q: p.lat == null ? p.name : '' });
   },
   'f-list': (el) => { S.sheet.F.list = el.dataset.v; renderSheet(); },
   'f-pkind': (el) => { const k = S.sheet.F.kinds, v = el.dataset.v; const i = k.indexOf(v); i < 0 ? k.push(v) : k.splice(i, 1); renderSheet(); },
@@ -368,15 +390,31 @@ const H = {
     if (F.hoursText.trim() && !hours) return toast('營業時間格式看不懂，請修正或清空');
     const base = F.id ? placeOf(F.id) : { id: uid(), tripId: S.tripId };
     Object.assign(base, { name: F.name.trim(), nameLocal: F.nameLocal.trim(), lat: F.lat, lng: F.lng, address: F.address, tags: [F.list, ...F.kinds],
-      hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), gmapsUrl: F.gmapsUrl || undefined });
-    delete base.sample;
+      hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), gmapsUrl: F.gmapsUrl || undefined, srcUrl: F.srcUrl || undefined });
+    delete base.sample; delete base.pending;
     if (!F.id) S.data.places.push(base);
+    if (S.pendingView && !S.data.places.some(x => x.tripId === S.tripId && x.lat == null)) S.pendingView = false;
     persist(); closeSheet(); render(); toast('已儲存');
   },
   'place-del': () => {
     const F = S.sheet.F; if (!F.confirmDel) { F.confirmDel = true; return renderSheet(); }
     S.data.places = S.data.places.filter(p => p.id !== F.id); persist(); closeSheet(); render();
   },
+
+  // 快速收藏
+  pend: () => { S.pendingView = !S.pendingView; render(); },
+  'quick-new': () => openSheet('quick', { name: '', srcUrl: '', list: S.list !== 'all' ? S.list : 'food' }),
+  'quick-paste': async () => {
+    try { const t = (await navigator.clipboard.readText()).trim(); if (t) { S.sheet.F.srcUrl = t; renderSheet(); } else toast('剪貼簿是空的'); }
+    catch { toast('無法讀取剪貼簿，請長按輸入欄貼上'); }
+  },
+  'quick-save': () => {
+    const F = S.sheet.F, name = F.name.trim(), url = (F.srcUrl || '').trim();
+    if (!name && !url) return toast('請輸入店名，或貼上連結');
+    S.data.places.push({ id: uid(), tripId: S.tripId, name: name || '（待命名）', lat: null, lng: null, tags: [F.list || 'food'], pending: true, srcUrl: url || undefined, hours: null });
+    persist(); closeSheet(); render(); toast('已收藏，記得之後補資料');
+  },
+  'pend-del': (el, id) => { if (!confirm('刪除這筆待整理？')) return; S.data.places = S.data.places.filter(p => p.id !== id); persist(); render(); },
 
   // 位置選擇
   'loc-search': async () => {
