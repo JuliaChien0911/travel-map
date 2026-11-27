@@ -256,7 +256,7 @@ function locBlock(F) {
     ${F.busy ? '<p class="muted">搜尋中…</p>' : ''}
     ${F.results ? `<ul class="results">${F.results.map((r, i) => `<li data-act="loc-pick" data-i="${i}"><b>${esc(r.name)}</b><small>${esc(r.address)}</small></li>`).join('') || '<li class="muted">找不到，換個關鍵字，或用下面的方式</li>'}</ul>` : ''}
     <div class="row"><button class="btn" data-act="loc-gps">用目前位置</button><button class="btn" data-act="loc-map">地圖點選</button></div>
-    <div class="row"><input data-f="gurl" placeholder="或貼上 Google 地圖連結" value="${esc(F.gurl || '')}"><button class="btn" data-act="loc-url">解析</button></div>
+    <div class="row"><input data-f="gurl" placeholder="或貼上座標／Google 地圖連結" value="${esc(F.gurl || '')}"><button class="btn" data-act="loc-url">解析</button></div>
   </div>`;
 }
 
@@ -438,9 +438,9 @@ const H = {
   'pick-cancel': () => { S.sheet.pick = false; renderSheet(); },
   'loc-url': () => {
     const F = S.sheet.F, r = parseMapsUrl(F.gurl);
-    if (!r) return toast('請貼上以 http 開頭的 Google 地圖連結');
-    F.gmapsUrl = r.url;
-    if (r.lat != null) { F.lat = r.lat; F.lng = r.lng; if (r.name && !F.name.trim()) F.name = r.name; toast('已從連結取得位置'); }
+    if (!r) return toast('請貼上座標（如 23.0353, 120.1478）或以 http 開頭的連結');
+    if (r.url) F.gmapsUrl = r.url;
+    if (r.lat != null) { F.lat = r.lat; F.lng = r.lng; if (r.name && !F.name.trim()) F.name = r.name; toast(r.url ? '已從連結取得位置' : '已設定座標'); }
     else toast('短連結無法取得座標，已保存連結；請再用名稱搜尋或地圖點選');
     renderSheet();
   },

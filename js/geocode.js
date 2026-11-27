@@ -18,7 +18,9 @@ export async function search(q, near) {
 
 // 解析 Google 地圖長連結（短網址 maps.app.goo.gl 無法在瀏覽器解析，只會保留連結）
 export function parseMapsUrl(s) {
-  const t = (s || '').trim();
+  const t = (s || '').trim().replace(/[（）()]/g, '');
+  const c = t.match(/^(-?\d{1,3}\.\d+)\s*[,，\s]\s*(-?\d{1,3}\.\d+)$/);   // 直接貼座標：23.0353, 120.1478
+  if (c && Math.abs(+c[1]) <= 90 && Math.abs(+c[2]) <= 180) return { url: null, lat: +c[1], lng: +c[2], name: null };
   if (!/^https?:\/\//i.test(t)) return null;
   const m = t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
     t.match(/[?&](?:q|ll|destination|query)=(-?\d+\.\d+)(?:,|%2C)(-?\d+\.\d+)/);
