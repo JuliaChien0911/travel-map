@@ -1,7 +1,7 @@
 import { $, esc, uid, dist, fmtDist, walkMin } from './util.js';
 import { DAYS, nowInTz, statusOf, summarize, parseHours } from './hours.js';
 import * as store from './store.js';
-import { search, parseMapsUrl } from './geocode.js';
+import { search, parseMapsUrl, simplify } from './geocode.js';
 
 const RADII = [0, 500, 1000, 2000, 5000];
 const TZS = ['Asia/Tokyo', 'Europe/Berlin', 'Asia/Seoul', 'Asia/Taipei', 'Asia/Bangkok', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York'];
@@ -20,7 +20,7 @@ const saveUi = () => store.jset('tm.ui', { origin: S.origin, radius: S.radius, t
 const trip = () => S.data.trips.find(t => t.id === S.tripId);
 const tagOf = id => S.data.tags.find(t => t.id === id);
 const placeOf = id => S.data.places.find(p => p.id === id);
-const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=walking`;
+const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.addr ? encodeURIComponent(p.name + ' ' + p.addr) : p.lat + ',' + p.lng}&travelmode=walking`;
 const mark = p => { const l = marks[p.id] || {}; return { visited: 'visited' in p ? !!p.visited : !!l.visited, review: 'review' in p ? (p.review || '') : (l.review || '') }; };
 function setMark(p, patch) {
   if (S.edit) { Object.assign(p, patch); persist(); }
@@ -145,7 +145,7 @@ function card({ p, d, st, m }) {
     </div>
     ${m.visited ? `<input class="rv" data-act="review" maxlength="80" placeholder="寫一句短評…" value="${esc(m.review)}">` : ''}
     ${open ? `<div class="more">
-      ${p.address ? `<p>📍 ${esc(p.address)}</p>` : ''}
+      ${p.addr || p.address ? `<p>📍 ${esc(p.addr || p.address)}</p>` : ''}
       ${p.hours ? `<p>🕒 ${summarize(p.hours).map(esc).join('<br>')}</p>` : '<p class="muted">🕒 未填營業時間</p>'}
       ${p.gmapsUrl ? `<p><a href="${esc(p.gmapsUrl)}" target="_blank" rel="noopener">在 Google 地圖查看評論 ↗</a></p>` : ''}
     </div>` : ''}
@@ -267,7 +267,8 @@ function placeForm() {
   <label>名稱<input data-f="name" value="${esc(F.name)}" placeholder="例：一蘭 道頓堀店"></label>
   <label>當地名稱（選填）<input data-f="nameLocal" value="${esc(F.nameLocal)}"></label>
   ${F.srcUrl ? `<p class="small"><a href="${esc(F.srcUrl)}" target="_blank" rel="noopener">看原貼文 ↗</a></p>` : ''}
-  <div class="lab">位置</div>${locBlock(F)}
+  <label>地址（從 Google 地圖複製，導航會用「店名＋地址」找到正確的店）<input data-f="addr" value="${esc(F.addr)}" placeholder="例：台南市北區海安路三段926號"></label>
+  <div class="lab">大概位置（只用來排距離，不用很精準）</div>${locBlock(F)}
   <div class="lab">清單</div>
   <div class="chips wrap">${lists.map(t => `<button class="chip ${F.list === t.id ? 'on' : ''}" data-act="f-list" data-v="${t.id}">${t.emoji} ${esc(t.label)}</button>`).join('')}</div>
   <div class="lab">類型（可複選）</div>
@@ -367,11 +368,11 @@ const H = {
   // 店家
   'place-new': () => {
     const o = originPt();
-    openSheet('place', { name: '', nameLocal: '', lat: null, lng: null, address: '', list: S.list !== 'all' ? S.list : 'food', kinds: [], hoursText: '', closed: [], note: '', gmapsUrl: '', q: '', near: o });
+    openSheet('place', { name: '', nameLocal: '', addr: '', lat: null, lng: null, address: '', list: S.list !== 'all' ? S.list : 'food', kinds: [], hoursText: '', closed: [], note: '', gmapsUrl: '', q: '', near: o });
   },
   'place-edit': (el, id) => {
     const p = placeOf(id), lt = p.tags.find(i => tagOf(i)?.group === 'list');
-    openSheet('place', { id, name: p.name, nameLocal: p.nameLocal || '', lat: p.lat, lng: p.lng, address: p.address || '', list: lt || 'food',
+    openSheet('place', { id, name: p.name, nameLocal: p.nameLocal || '', addr: p.addr || '', lat: p.lat, lng: p.lng, address: p.address || '', list: lt || 'food',
       srcUrl: p.srcUrl || '', kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', q: p.lat == null ? p.name : '' });
   },
   'f-list': (el) => { S.sheet.F.list = el.dataset.v; renderSheet(); },
@@ -390,7 +391,7 @@ const H = {
     if (F.hoursText.trim() && !hours) return toast('營業時間格式看不懂，請修正或清空');
     const base = F.id ? placeOf(F.id) : { id: uid(), tripId: S.tripId };
     Object.assign(base, { name: F.name.trim(), nameLocal: F.nameLocal.trim(), lat: F.lat, lng: F.lng, address: F.address, tags: [F.list, ...F.kinds],
-      hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), gmapsUrl: F.gmapsUrl || undefined, srcUrl: F.srcUrl || undefined });
+      hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), addr: (F.addr || '').trim() || undefined, gmapsUrl: F.gmapsUrl || undefined, srcUrl: F.srcUrl || undefined });
     delete base.sample; delete base.pending;
     if (!F.id) S.data.places.push(base);
     if (S.pendingView && !S.data.places.some(x => x.tripId === S.tripId && x.lat == null)) S.pendingView = false;
@@ -420,7 +421,13 @@ const H = {
   'loc-search': async () => {
     const F = S.sheet.F, q = (F.q || F.name || '').trim(); if (!q) return toast('請輸入要搜尋的名稱');
     F.q = q; F.busy = true; F.results = null; renderSheet();
-    try { F.results = await search(q, F.near || originPt() || trip()?.anchors[0]); } catch { F.results = []; toast('搜尋失敗，請檢查網路'); }
+    if (/號|路|街|巷|段/.test(q) && !(F.addr || '').trim()) F.addr = q;
+    const near = F.near || originPt() || trip()?.anchors[0];
+    try {
+      F.results = await search(q, near);
+      const q2 = simplify(q);
+      if (!F.results.length && q2 && q2 !== q) { F.results = await search(q2, near); if (F.results.length) toast('找不到精確門牌，先顯示路段位置（夠用了）'); }
+    } catch { F.results = []; toast('搜尋失敗，請檢查網路'); }
     F.busy = false; renderSheet();
   },
   'loc-pick': (el) => {

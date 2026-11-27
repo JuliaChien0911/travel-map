@@ -29,3 +29,8 @@ export function parseMapsUrl(s) {
   if (nm) { try { name = decodeURIComponent(nm[1].replace(/\+/g, ' ')); } catch { name = nm[1]; } }
   return { url: t, lat: m ? +m[1] : null, lng: m ? +m[2] : null, name };
 }
+
+// 找不到精確門牌時，去掉門牌／樓層，退而求其次找到路段
+export function simplify(q) {
+  return (q || '').replace(/^\s*\d{3,6}\s*/, '').replace(/[0-9０-９]+(之[0-9]+)?\s*號.*$/, '').replace(/[0-9０-９]+\s*(樓|F|f).*$/, '').replace(/\s+/g, ' ').trim();
+}
