@@ -7,22 +7,89 @@
    "country": "JP",
    "tz": "Asia/Tokyo",
    "anchors": [
-    { "id": "a1", "name": "心齋橋日航酒店", "lat": 34.6723, "lng": 135.5005 }
+    {
+     "id": "a1",
+     "name": "心齋橋日航酒店",
+     "lat": 34.6723,
+     "lng": 135.5005
+    }
    ]
+  },
+  {
+   "id": "6mpob8ib4",
+   "name": "台中",
+   "country": "",
+   "tz": "Asia/Taipei",
+   "anchors": []
   }
  ],
  "tags": [
-  { "id": "food", "label": "美食", "emoji": "🍽️", "group": "list" },
-  { "id": "shop", "label": "必逛", "emoji": "🛍️", "group": "list" },
-  { "id": "ramen", "label": "拉麵", "emoji": "🍜", "group": "kind" },
-  { "id": "sushi", "label": "壽司", "emoji": "🍣", "group": "kind" },
-  { "id": "yakiniku", "label": "燒肉", "emoji": "🥩", "group": "kind" },
-  { "id": "street", "label": "小吃", "emoji": "🍢", "group": "kind" },
-  { "id": "cafe", "label": "咖啡甜點", "emoji": "☕", "group": "kind" },
-  { "id": "drug", "label": "藥妝", "emoji": "💊", "group": "kind" },
-  { "id": "gift", "label": "伴手禮", "emoji": "🎁", "group": "kind" },
-  { "id": "mall", "label": "百貨商場", "emoji": "🏬", "group": "kind" },
-  { "id": "kids", "label": "孩子最愛", "emoji": "🧸", "group": "kind" }
+  {
+   "id": "food",
+   "label": "美食",
+   "emoji": "🍽️",
+   "group": "list"
+  },
+  {
+   "id": "shop",
+   "label": "必逛",
+   "emoji": "🛍️",
+   "group": "list"
+  },
+  {
+   "id": "ramen",
+   "label": "拉麵",
+   "emoji": "🍜",
+   "group": "kind"
+  },
+  {
+   "id": "sushi",
+   "label": "壽司",
+   "emoji": "🍣",
+   "group": "kind"
+  },
+  {
+   "id": "yakiniku",
+   "label": "燒肉",
+   "emoji": "🥩",
+   "group": "kind"
+  },
+  {
+   "id": "street",
+   "label": "小吃",
+   "emoji": "🍢",
+   "group": "kind"
+  },
+  {
+   "id": "cafe",
+   "label": "咖啡甜點",
+   "emoji": "☕",
+   "group": "kind"
+  },
+  {
+   "id": "drug",
+   "label": "藥妝",
+   "emoji": "💊",
+   "group": "kind"
+  },
+  {
+   "id": "gift",
+   "label": "伴手禮",
+   "emoji": "🎁",
+   "group": "kind"
+  },
+  {
+   "id": "mall",
+   "label": "百貨商場",
+   "emoji": "🏬",
+   "group": "kind"
+  },
+  {
+   "id": "kids",
+   "label": "孩子最愛",
+   "emoji": "🧸",
+   "group": "kind"
+  }
  ],
  "places": [
   {
@@ -33,7 +100,10 @@
    "lat": 34.6688,
    "lng": 135.5018,
    "address": "道頓堀",
-   "tags": ["food", "ramen"],
+   "tags": [
+    "food",
+    "ramen"
+   ],
    "hours": null,
    "note": "範例資料：請自行刪除或改成你的清單",
    "sample": true
@@ -46,7 +116,10 @@
    "lat": 34.6624,
    "lng": 135.5063,
    "address": "日本橋",
-   "tags": ["food", "street"],
+   "tags": [
+    "food",
+    "street"
+   ],
    "hours": null,
    "note": "範例資料：請自行刪除或改成你的清單",
    "sample": true
@@ -59,7 +132,11 @@
    "lat": 34.6726,
    "lng": 135.5011,
    "address": "心齋橋",
-   "tags": ["shop", "mall", "kids"],
+   "tags": [
+    "shop",
+    "mall",
+    "kids"
+   ],
    "hours": null,
    "note": "範例資料：請自行刪除或改成你的清單",
    "sample": true
@@ -72,7 +149,10 @@
    "lat": 35.005,
    "lng": 135.7644,
    "address": "京都",
-   "tags": ["food", "street"],
+   "tags": [
+    "food",
+    "street"
+   ],
    "hours": null,
    "note": "範例資料：請自行刪除或改成你的清單",
    "sample": true
