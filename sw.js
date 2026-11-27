@@ -1,4 +1,4 @@
-const VERSION = 'tm-v13';
+const VERSION = 'tm-v14';
 const SHELL = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/util.js', 'js/hours.js', 'js/store.js', 'js/geocode.js', 'js/help.js',
   'js/vendor/leaflet.js', 'js/vendor/leaflet.css', 'manifest.webmanifest', 'icons/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

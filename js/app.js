@@ -366,7 +366,7 @@ function placeForm() {
   <div class="chips wrap">${kinds.map(t => `<button class="chip ${F.kinds.includes(t.id) ? 'on' : ''}" data-act="f-pkind" data-v="${t.id}">${t.emoji} ${esc(t.label)}</button>`).join('')}</div>
   <div class="row"><input data-f="newKind" placeholder="新增類型，如 🍣 壽司" value="${esc(F.newKind || '')}"><button class="btn" data-act="f-addkind">加入</button></div>
   <div class="lab">營業時間</div>
-  <textarea data-f="hoursText" rows="3" placeholder="例：11:00-22:00　（或直接貼上 Google 地圖的營業時間）">${esc(F.hoursText)}</textarea>
+  <textarea data-f="hoursText" rows="3" placeholder="例：11:00-22:00　（可貼上 Google 地圖截圖用「原況文字」拷貝的營業時間）">${esc(F.hoursText)}</textarea>
   <div class="lab small">公休日（只填一個時段時用）</div>
   <div class="chips wrap">${[1, 2, 3, 4, 5, 6, 0].map(d => `<button class="chip ${F.closed.includes(d) ? 'on' : ''}" data-act="f-closed" data-v="${d}">${DAYS[d]}</button>`).join('')}</div>
   <div id="hp" class="hint">${hoursPreview(F)}</div>

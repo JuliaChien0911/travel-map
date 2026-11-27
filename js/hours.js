@@ -79,19 +79,21 @@ function dayRange(line) {
 const CLOSED = /休|公休|定休|closed/i;
 
 export function parseHours(text, closedDays = []) {
-  text = (text || '').replace(/[   ]/g, ' ').replace(/：/g, ':').trim();
+  text = (text || '').replace(/[   ]/g, ' ').replace(/：/g, ':').replace(/中午(\s*12:00)?/g, '12:00').replace(/午夜(\s*12:00)?/g, '24:00').trim();
   if (!text) return null;
   const w = Array.from({ length: 7 }, () => []);
-  let labeled = false;
+  let labeled = false, cur = null;
   const plain = [];
+  // Google 地圖常見：星期一 11:30–14:00 換行 15:00–22:30（第二段沒有星期），或星期與時間分兩行
   for (const line of text.split(/\n|;|；/)) {
     const days = dayRange(line);
     const is24 = /24\s*小時|24\s*hours|open 24/i.test(line);
     const r = is24 ? [['00:00', '24:00']] : ranges(line);
     if (days) {
-      if (r.length) { labeled = true; days.forEach(d => { w[d] = r; }); }
-      else if (CLOSED.test(line)) { labeled = true; days.forEach(d => { w[d] = []; }); }
-    } else plain.push(line);
+      labeled = true; cur = days;
+      days.forEach(d => { w[d] = r.slice(); });
+    } else if (cur && r.length) cur.forEach(d => { w[d] = w[d].concat(r); });
+    else if (!cur) plain.push(line);
   }
   if (labeled) return w;
   const ptxt = plain.join(' ');
