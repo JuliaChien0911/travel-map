@@ -4,7 +4,7 @@ import * as store from './store.js';
 import { search, parseMapsUrl, simplify } from './geocode.js';
 import { HELP, HELP_UPDATED } from './help.js';
 
-const RADII = [0, 500, 1000, 2000, 5000];
+const RADII = [0, 500, 1000, 2000, 5000, 10000];
 const TZS = ['Asia/Tokyo', 'Europe/Berlin', 'Asia/Seoul', 'Asia/Taipei', 'Asia/Bangkok', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York'];
 let marks = store.jget('tm.marks', {});
 const lastList = () => store.jget('tm.ui', {}).lastList;
@@ -12,7 +12,7 @@ const ui = store.jget('tm.ui', {});
 
 const S = {
   data: { version: 1, trips: [], tags: [], places: [] }, from: '', tripId: null, edit: false,
-  origin: ui.origin || null, gps: null, gpsMsg: '', list: 'all', kinds: new Set(), openOnly: false, unvisited: false,
+  origin: ui.origin || null, gps: null, gpsMsg: '', list: 'all', kinds: new Set(), openOnly: false, visit: 'all', favStat: 'all',
   lastList: ui.lastList, radius: ui.radius || 0, view: 'list', expanded: null, sheet: null, saveSt: ''
 };
 let editOff = !!ui.editOff;  // 只在使用者手動切換時記住
@@ -23,7 +23,7 @@ const trip = () => S.data.trips.find(t => t.id === S.tripId);
 const tagOf = id => S.data.tags.find(t => t.id === id);
 const placeOf = id => S.data.places.find(p => p.id === id);
 const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.addr ? encodeURIComponent(p.name + ' ' + p.addr) : p.lat + ',' + p.lng}&travelmode=walking`;
-const mark = p => { const l = marks[p.id] || {}; return { visited: 'visited' in p ? !!p.visited : !!l.visited, review: 'review' in p ? (p.review || '') : (l.review || '') }; };
+const mark = p => { const l = marks[p.id] || {}; return { visited: 'visited' in p ? !!p.visited : !!l.visited, want: 'want' in p ? !!p.want : !!l.want, review: 'review' in p ? (p.review || '') : (l.review || '') }; };
 function setMark(p, patch) {
   if (S.edit) { Object.assign(p, patch); persist(); }
   else { marks[p.id] = { ...marks[p.id], ...patch }; store.jset('tm.marks', marks); }
@@ -70,7 +70,9 @@ function filtered(o) {
   if (S.kinds.size) ps = ps.filter(p => p.tags.some(x => S.kinds.has(x)));
   ps = ps.map(p => ({ p, d: o ? dist(o, p) : null, st: statusOf(p.hours, now), m: mark(p) }));
   if (S.openOnly) ps = ps.filter(x => x.st.state === 'open' || x.st.state === 'closing');
-  if (S.unvisited) ps = ps.filter(x => !x.m.visited);
+  if (S.visit === 'unvisited') ps = ps.filter(x => !x.m.visited);
+  if (S.visit === 'visited') ps = ps.filter(x => x.m.visited);
+  if (S.visit === 'want') ps = ps.filter(x => x.m.want);
   if (S.radius && o) ps = ps.filter(x => x.d <= S.radius);
   ps.sort((a, b) => o ? a.d - b.d : a.p.name.localeCompare(b.p.name, 'zh-Hant'));
   return ps;
@@ -92,7 +94,7 @@ function render() {
   const used = new Set(S.data.places.filter(p => p.tripId === t.id).flatMap(p => p.tags));
   const kinds = S.data.tags.filter(x => x.group === 'kind' && (used.has(x.id) || S.kinds.has(x.id)));
   const hh = `週${DAYS[now.day]} ${String(Math.floor(now.min / 60)).padStart(2, '0')}:${String(now.min % 60).padStart(2, '0')}`;
-  const hasTok = store.hasToken();
+  const hasTok = store.hasToken(), nf = (S.openOnly ? 1 : 0) + (S.visit !== 'all' ? 1 : 0) + (S.radius ? 1 : 0) + S.kinds.size;
   root.innerHTML = `
   <header class="top">
     <button class="tripbtn" data-act="trips"><span class="serif">${esc(t.name)}</span><small>現地 ${hh} ▾</small></button>
@@ -103,28 +105,29 @@ function render() {
       <button class="icon-btn" data-act="settings" aria-label="設定">⚙︎</button>
     </div>
   </header>
-  <section class="origin" data-act="origin">
+  ${S.view === 'fav' ? '' : `<section class="origin" data-act="origin">
     <span class="pin">📍</span>
     <span class="otxt"><b>${esc(o ? o.label : (S.origin?.type === 'gps' ? '我的位置' : '選擇出發點'))}</b>
       <small>${S.gpsMsg ? esc(S.gpsMsg) : (o ? '依距離由近到遠' : (S.origin?.type === 'gps' ? '尚未取得定位，點此重試' : '點此選擇基地點或使用 GPS'))}</small></span>
     ${S.origin?.type === 'gps' ? '<button class="icon-btn" data-act="regps" aria-label="重新定位">↻</button>' : ''}
     <span class="car">▾</span>
-  </section>
+  </section>`}
   <nav class="seg">
     <button class="${S.list === 'all' ? 'on' : ''}" data-act="list" data-v="all">全部</button>
     ${lists.map(l => `<button class="${S.list === l.id ? 'on' : ''}" data-act="list" data-v="${l.id}">${l.emoji} ${esc(l.label)}</button>`).join('')}
   </nav>
-  <div class="chips scroll">
-    <button class="chip ${S.openOnly ? 'on' : ''}" data-act="f-open">🟢 營業中</button>
-    <button class="chip ${S.unvisited ? 'on' : ''}" data-act="f-unv">還沒去過</button>
-    <button class="chip ${S.radius ? 'on' : ''}" data-act="f-rad">範圍：${S.radius ? fmtDist(S.radius) + ' 內' : '不限'}</button>
-    ${kinds.map(k => `<button class="chip ${S.kinds.has(k.id) ? 'on' : ''}" data-act="f-kind" data-v="${k.id}">${k.emoji} ${esc(k.label)}</button>`).join('')}
-  </div>
-  <div class="bar"><span>${S.pendingView ? pend.length : list.length} 間${S.edit ? ` <button class="chip ${S.pendingView ? 'on' : ''}" data-act="pend">📥 待整理 ${pend.length}</button>` : ''}</span>
-    <span class="vt"><button class="${S.view === 'list' ? 'on' : ''}" data-act="view" data-v="list">清單</button><button class="${S.view === 'map' ? 'on' : ''}" data-act="view" data-v="map">地圖</button></span></div>
+  ${S.view === 'fav' ? '' : `<div class="chips scroll">
+    <button class="chip filt ${nf ? 'on' : ''}" data-act="filter">☰ 篩選${nf ? '・' + nf : ''}</button>
+    ${S.openOnly ? '<button class="chip act" data-act="rm-open">🟢 營業中 ×</button>' : ''}
+    ${S.visit !== 'all' ? `<button class="chip act" data-act="rm-visit">${VISIT[S.visit]} ×</button>` : ''}
+    ${S.radius ? `<button class="chip act" data-act="rm-rad">${fmtDist(S.radius)} 內 ×</button>` : ''}
+    ${[...S.kinds].map(tagOf).filter(Boolean).map(k => `<button class="chip act" data-act="f-kind" data-v="${k.id}">${k.emoji} ${esc(k.label)} ×</button>`).join('')}
+  </div>`}
+  <div class="bar"><span>${S.view === 'fav' ? '' : (S.pendingView ? pend.length : list.length) + ' 間'}${S.edit && S.view !== 'fav' ? ` <button class="chip ${S.pendingView ? 'on' : ''}" data-act="pend">📥 待整理 ${pend.length}</button>` : ''}</span>
+    <span class="vt"><button class="${S.view === 'list' ? 'on' : ''}" data-act="view" data-v="list">清單</button><button class="${S.view === 'map' ? 'on' : ''}" data-act="view" data-v="map">地圖</button><button class="${S.view === 'fav' ? 'on' : ''}" data-act="view" data-v="fav">❤︎ 收藏</button></span></div>
   <main>
-    ${S.view === 'map' && !S.pendingView ? '<div id="map"></div>' : ''}
-    <div class="cards">${S.pendingView ? (pend.map(pcard).join('') || '<p class="muted pad">沒有待整理的店。</p>') : list.length ? list.map(x => card(x)).join('') : `<p class="muted pad">${S.data.places.some(p => p.tripId === t.id) ? '沒有符合條件的店家，放寬一下篩選看看。' : '這趟旅程還沒有店家。' + (S.edit ? '點右下角 ＋ 新增。' : '')}</p>`}</div>
+    ${S.view === 'fav' ? favHtml() : `${S.view === 'map' && !S.pendingView ? '<div id="map"></div>' : ''}
+    <div class="cards">${S.pendingView ? (pend.map(pcard).join('') || '<p class="muted pad">沒有待整理的店。</p>') : list.length ? list.map(x => card(x)).join('') : `<p class="muted pad">${S.data.places.some(p => p.tripId === t.id) ? '沒有符合條件的店家，放寬一下篩選看看。' : '這趟旅程還沒有店家。' + (S.edit ? '點右下角 ＋ 新增。' : '')}</p>`}</div>`}
   </main>
   ${S.edit ? '<button class="fab fab2" data-act="quick-new" aria-label="快速收藏">⚡</button><button class="fab" data-act="place-new" aria-label="新增店家">＋</button>' : ''}`;
   if (S.view === 'map' && !S.pendingView) drawMap(list, o);
@@ -214,6 +217,7 @@ function card({ p, d, st, m }) {
     <div class="r3">
       <a class="btn pri" href="${navUrl(p)}" target="_blank" rel="noopener">🧭 導航</a>
       <button class="btn ${m.visited ? 'ok' : ''}" data-act="visit">${m.visited ? '✓ 去過了' : '○ 去過'}</button>
+      <button class="btn heart ${m.want ? 'on' : ''}" data-act="want" aria-label="想去">${m.want ? '❤️' : '♡'}</button>
       ${S.edit ? '<button class="btn" data-act="place-edit">✎</button>' : ''}
     </div>
     ${m.visited ? `<input class="rv" data-act="review" maxlength="80" placeholder="寫一句短評…" value="${esc(m.review)}">` : ''}
@@ -223,6 +227,45 @@ function card({ p, d, st, m }) {
       ${p.gmapsUrl ? `<p><a href="${esc(p.gmapsUrl)}" target="_blank" rel="noopener">在 Google 地圖查看評論 ↗</a></p>` : ''}
     </div>` : ''}
   </article>`;
+}
+
+const VISIT = { all: '全部', unvisited: '還沒去過', visited: '已去過', want: '❤️ 想去' };
+
+// ---------- 我的收藏 ----------
+function favHtml() {
+  const all = S.data.places.filter(p => p.lat != null && p.tripId).map(p => ({ p, m: mark(p) }));
+  const inList = all.filter(x => S.list === 'all' || x.p.tags.includes(S.list));
+  const n = { all: inList.length, visited: inList.filter(x => x.m.visited).length, want: inList.filter(x => x.m.want).length };
+  const rows = inList.filter(x => S.favStat === 'all' || x.m[S.favStat]);
+  const tname = id => S.data.trips.find(t => t.id === id)?.name || '';
+  rows.sort((a, b) => (b.m.want - a.m.want) || (a.p.tripId === S.tripId ? -1 : 0) - (b.p.tripId === S.tripId ? -1 : 0) || a.p.name.localeCompare(b.p.name, 'zh-Hant'));
+  const tile = (k, ic, lb) => `<button class="tile ${S.favStat === k ? 'on' : ''}" data-act="fav-stat" data-v="${k}"><span>${ic}</span><small>${lb}</small><b>${n[k]}</b></button>`;
+  return `<div class="tiles">${tile('all', '⭐', '收藏')}${tile('visited', '✅', '已去過')}${tile('want', '❤️', '想去')}</div>
+  <div class="favs">${rows.map(({ p, m }) => {
+    const lt = p.tags.map(tagOf).find(t => t?.group === 'list'), kd = p.tags.map(tagOf).filter(t => t?.group === 'kind').map(t => t.label).join('・');
+    return `<div class="frow ${m.visited ? 'done' : ''}" data-id="${p.id}">
+      <div class="fic">${lt?.emoji || '📍'}</div>
+      <div class="ftx" data-act="fav-open"><b>${esc(p.name)}</b><small>${esc([kd, tname(p.tripId)].filter(Boolean).join('・'))}</small>
+        <span class="badges">${lt ? `<em class="bd ${lt.id}">${esc(lt.label)}</em>` : ''}${m.visited ? '<em class="bd ok">去過</em>' : ''}</span></div>
+      <button class="hbtn" data-act="want" aria-label="想去">${m.want ? '❤️' : '♡'}</button>
+    </div>`;
+  }).join('') || '<p class="muted pad">這裡還沒有店家。</p>'}</div>`;
+}
+
+// ---------- 篩選頁 ----------
+function filterSheet() {
+  const F = S.sheet.F, t = trip();
+  const used = new Set(S.data.places.filter(p => p.tripId === t.id).flatMap(p => p.tags));
+  const kinds = S.data.tags.filter(x => x.group === 'kind' && used.has(x.id));
+  const seg = (key, opts) => `<div class="chips wrap">${opts.map(([v, l]) => `<button class="chip ${F[key] === v ? 'on' : ''}" data-act="fs-set" data-k="${key}" data-v="${v}">${l}</button>`).join('')}</div>`;
+  return `<div class="shead"><button class="link" data-act="close">取消</button><h2>篩選</h2><button class="link" data-act="fs-reset">重設</button></div>
+  <div class="lab">營業狀態</div>${seg('open', [['0', '全部'], ['1', '🟢 營業中']])}
+  <div class="lab">造訪狀態</div>${seg('visit', Object.entries(VISIT))}
+  <div class="lab">類型（可複選）</div>
+  ${kinds.length ? `<div class="kgrid">${kinds.map(k => `<button class="kbtn ${F.kinds.includes(k.id) ? 'on' : ''}" data-act="fs-kind" data-v="${k.id}"><span>${k.emoji}</span><small>${esc(k.label)}</small></button>`).join('')}</div>` : '<p class="muted small">這趟旅程的店還沒設類型。</p>'}
+  <div class="lab">距離範圍</div>${seg('radius', [...RADII.slice(1).map(r => [String(r), fmtDist(r)]), ['0', '不限']])}
+  ${originPt() ? '' : '<p class="muted small">（要先有定位或基地點，距離範圍才會生效）</p>'}
+  <button class="btn pri wide" data-act="fs-apply">套用</button>`;
 }
 
 function saveText() { return { pending: '…', saving: '儲存中', saved: '☁︎ 已儲存', error: '⚠︎ 未儲存' }[S.saveSt] || ''; }
@@ -269,7 +312,7 @@ let pickMap = null;
 function renderSheet() {
   const sh = S.sheet; if (!sh) return;
   const root = $('#sheet-root'), prev = root.querySelector('.sheet')?.scrollTop || 0;
-  const body = { origin: originSheet, trips: tripsSheet, settings: settingsSheet, place: placeForm, anchor: anchorForm, trip: tripForm, quick: quickForm, help: helpSheet }[sh.type];
+  const body = { origin: originSheet, trips: tripsSheet, settings: settingsSheet, place: placeForm, anchor: anchorForm, filter: filterSheet, trip: tripForm, quick: quickForm, help: helpSheet }[sh.type];
   root.innerHTML = `<div class="backdrop" data-act="close"></div><div class="sheet" role="dialog">${sh.pick ? pickHtml() : body()}</div>`;
   document.body.classList.add('noscroll');
   const sc = root.querySelector('.sheet'); if (sc) sc.scrollTop = prev;
@@ -417,9 +460,22 @@ async function initPick() {
 const H = {
   close: () => closeSheet(),
   list: (el) => { S.list = el.dataset.v; render(); },
-  'f-open': () => { S.openOnly = !S.openOnly; render(); },
-  'f-unv': () => { S.unvisited = !S.unvisited; render(); },
-  'f-rad': () => { S.radius = RADII[(RADII.indexOf(S.radius) + 1) % RADII.length]; saveUi(); render(); },
+  filter: () => openSheet('filter', { open: S.openOnly ? '1' : '0', visit: S.visit, kinds: [...S.kinds], radius: String(S.radius || 0) }),
+  'fs-set': (el) => { S.sheet.F[el.dataset.k] = el.dataset.v; renderSheet(); },
+  'fs-kind': (el) => { const k = S.sheet.F.kinds, v = el.dataset.v, i = k.indexOf(v); i < 0 ? k.push(v) : k.splice(i, 1); renderSheet(); },
+  'fs-reset': () => { Object.assign(S.sheet.F, { open: '0', visit: 'all', kinds: [], radius: '0' }); renderSheet(); },
+  'fs-apply': () => { const F = S.sheet.F; S.openOnly = F.open === '1'; S.visit = F.visit; S.kinds = new Set(F.kinds); S.radius = +F.radius; saveUi(); closeSheet(); render(); },
+  'rm-open': () => { S.openOnly = false; render(); },
+  'rm-visit': () => { S.visit = 'all'; render(); },
+  'rm-rad': () => { S.radius = 0; saveUi(); render(); },
+  want: (el, id) => { const p = placeOf(id), m = mark(p); setMark(p, { want: !m.want }); render(); toast(m.want ? '已取消想去' : '❤️ 加入想去'); },
+  'fav-stat': (el) => { S.favStat = el.dataset.v; render(); },
+  'fav-open': (el, id) => {
+    const p = placeOf(id);
+    if (p.tripId !== S.tripId) { S.tripId = p.tripId; S.kinds.clear(); S.origin = defaultOrigin(); saveUi(); if (S.origin.type === 'gps' && !S.gps) locate(); }
+    S.list = 'all'; S.openOnly = false; S.visit = 'all'; S.radius = 0; S.view = 'list'; S.expanded = id; render();
+    setTimeout(() => document.querySelector(`.card[data-id="${id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
+  },
   'f-kind': (el) => { const v = el.dataset.v; S.kinds.has(v) ? S.kinds.delete(v) : S.kinds.add(v); render(); },
   view: (el) => { S.view = el.dataset.v; render(); },
   expand: (el, id) => { S.expanded = S.expanded === id ? null : id; render(); },

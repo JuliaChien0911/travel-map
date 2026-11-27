@@ -100,4 +100,26 @@ details{margin:8px 0;padding:10px 12px;background:var(--card);border:1px solid v
 .btn.ghost{background:transparent;border-style:dashed;color:var(--muted)}
 .alts{margin:6px 0}.alts summary{color:var(--muted);cursor:pointer;padding:4px 0}
 .results li.sel{background:rgba(0,0,0,.05)}.results li.sel b::before{content:'✓ '}
+/* 篩選頁／收藏 */
+.chip.filt{font-weight:600}.chip.filt.on{background:var(--accent);border-color:var(--accent)}
+.chip.act{background:#f3e3da;border-color:#e6c3b2;color:var(--accent)}
+.shead{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.shead h2{font-size:18px}
+.link{color:var(--accent);font-size:15px;padding:6px 2px}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.kbtn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.kbtn span{font-size:22px}.kbtn small{font-size:12px}.kbtn.on{background:#f3e3da;border-color:var(--accent);color:var(--accent)}
+.btn.heart{flex:0 0 52px;font-size:18px}.btn.heart.on{background:#fbe6e3;border-color:#f0c4bd}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px 4px}
+.tile{display:flex;flex-direction:column;align-items:center;padding:12px 4px;background:var(--card);border:1px solid var(--line);border-radius:16px}
+.tile span{font-size:18px}.tile small{color:var(--muted);font-size:12px}.tile b{font-family:var(--serif);font-size:24px;line-height:1.2}
+.tile.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.favs{margin:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.frow{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--line)}.frow:last-child{border:0}
+.frow.done .ftx b{color:var(--muted)}
+.fic{flex:none;width:52px;height:52px;border-radius:12px;background:#efe4d2;display:grid;place-items:center;font-size:26px}
+.ftx{flex:1;min-width:0;cursor:pointer}.ftx b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftx small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badges{display:flex;gap:4px;margin-top:4px}.bd{font-style:normal;font-size:11px;padding:1px 8px;border-radius:99px;background:#f3e3da;color:var(--accent)}
+.bd.ok{background:#dcefe2;color:var(--green)}.bd.shop{background:#f6e0ea;color:#b03a6a}
+.hbtn{flex:none;width:40px;height:40px;font-size:20px;color:var(--muted)}
 @media (min-width:700px){body{box-shadow:0 0 0 1px var(--line)}.sheet{border-radius:22px}}
