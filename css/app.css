@@ -94,6 +94,7 @@ h1,h2,h3{margin:0}
 .results small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hint{margin-top:6px;font-size:13px;color:var(--muted)}
 #pickmap{height:50vh;border-radius:14px;border:1px solid var(--line)}
+ol{padding-left:22px;margin:8px 0}li{margin:7px 0}
 details{margin:8px 0;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:13px}summary{font-weight:600;cursor:pointer}
 
 @media (min-width:700px){body{box-shadow:0 0 0 1px var(--line)}.sheet{border-radius:22px}}

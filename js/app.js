@@ -2,6 +2,7 @@ import { $, esc, uid, dist, fmtDist, walkMin } from './util.js';
 import { DAYS, nowInTz, statusOf, summarize, parseHours } from './hours.js';
 import * as store from './store.js';
 import { search, parseMapsUrl, simplify } from './geocode.js';
+import { HELP, HELP_UPDATED } from './help.js';
 
 const RADII = [0, 500, 1000, 2000, 5000];
 const TZS = ['Asia/Tokyo', 'Europe/Berlin', 'Asia/Seoul', 'Asia/Taipei', 'Asia/Bangkok', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York'];
@@ -71,6 +72,7 @@ function render() {
   if (!t) {
     root.innerHTML = `<div class="empty"><h1>旅行地圖</h1><p>${S.edit ? '還沒有旅程，先建立一個吧。' : '還沒有資料。'}</p>
       ${S.edit ? '<button class="btn pri" data-act="trip-new">＋ 建立旅程</button>' : ''}
+      <button class="btn" data-act="help">？ 使用說明</button>
       <button class="btn" data-act="settings">⚙︎ 設定</button></div>`;
     return;
   }
@@ -88,6 +90,7 @@ function render() {
     <div class="top-r">
       <span id="savest" class="savest ${S.saveSt}">${saveText()}</span>
       ${hasTok ? `<button class="pill-btn ${S.edit ? 'on' : ''}" data-act="toggle-edit">${S.edit ? '✎ 編輯中' : '檢視'}</button>` : ''}
+      <button class="icon-btn" data-act="help" aria-label="使用說明">？</button>
       <button class="icon-btn" data-act="settings" aria-label="設定">⚙︎</button>
     </div>
   </header>
@@ -195,7 +198,7 @@ let pickMap = null;
 function renderSheet() {
   const sh = S.sheet; if (!sh) return;
   const root = $('#sheet-root'), prev = root.querySelector('.sheet')?.scrollTop || 0;
-  const body = { origin: originSheet, trips: tripsSheet, settings: settingsSheet, place: placeForm, anchor: anchorForm, trip: tripForm, quick: quickForm }[sh.type];
+  const body = { origin: originSheet, trips: tripsSheet, settings: settingsSheet, place: placeForm, anchor: anchorForm, trip: tripForm, quick: quickForm, help: helpSheet }[sh.type];
   root.innerHTML = `<div class="backdrop" data-act="close"></div><div class="sheet" role="dialog">${sh.pick ? pickHtml() : body()}</div>`;
   document.body.classList.add('noscroll');
   const sc = root.querySelector('.sheet'); if (sc) sc.scrollTop = prev;
@@ -209,6 +212,12 @@ function originSheet() {
   ${t.anchors.map(a => `<div class="opt ${cur?.type === 'anchor' && cur.id === a.id ? 'on' : ''}" data-act="origin-anchor" data-v="${a.id}">🏨 <span>${esc(a.name)}</span>
     ${S.edit ? `<button class="x" data-act="anchor-del" data-v="${a.id}" aria-label="刪除">✕</button>` : ''}</div>`).join('')}
   ${S.edit ? '<button class="opt add" data-act="anchor-new">＋ 新增基地點（飯店、車站…）</button>' : (t.anchors.length ? '' : '<p class="muted">這趟旅程還沒有基地點。</p>')}
+  <button class="btn wide" data-act="close">關閉</button>`;
+}
+
+function helpSheet() {
+  return `<h2>使用說明</h2><p class="muted small">最後更新：${HELP_UPDATED}</p>
+  ${HELP.map((x, i) => `<details ${i === 0 ? 'open' : ''}><summary>${esc(x.title)}</summary><ol>${x.steps.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${x.note ? `<p class="muted small">${esc(x.note)}</p>` : ''}</details>`).join('')}
   <button class="btn wide" data-act="close">關閉</button>`;
 }
 
@@ -340,6 +349,7 @@ const H = {
   trips: () => openSheet('trips'),
   'trip-pick': (el) => { S.tripId = el.dataset.v; S.list = 'all'; S.kinds.clear(); S.origin = defaultOrigin(); saveUi(); closeSheet(); render(); if (S.origin.type === 'gps') locate(); },
   'toggle-edit': () => { S.edit = !S.edit; editOff = !S.edit; saveUi(); render(); toast(S.edit ? '編輯模式：修改會存到雲端' : '檢視模式'); },
+  help: () => openSheet('help'),
   settings: () => openSheet('settings', { ...(store.getCfg() || store.guessRepo()) }),
 
   // 旅程
