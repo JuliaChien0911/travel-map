@@ -253,15 +253,19 @@
   {
    "id": "0yonq4loo",
    "tripId": "6mpob8ib4",
-   "name": "（待命名）",
-   "lat": null,
-   "lng": null,
+   "name": "云如意茶館",
+   "lat": 31.7211654,
+   "lng": 117.2542715,
    "tags": [
     "food"
    ],
-   "pending": true,
    "srcUrl": "https://www.instagram.com/reel/De9JC5TpqOf/?cnvx=eXM4azNrdXB2a3Vv",
-   "hours": null
+   "hours": null,
+   "nameLocal": "",
+   "address": "合肥市公安局交通警察支队车辆管理所, 紫石路, 吉园居民委员会, 临湖社区, 合肥经济技术开发区, 蜀山区, 合肥市, 安徽省, 230601, 中国",
+   "hoursText": "",
+   "closed": [],
+   "note": ""
   }
  ]
 }
