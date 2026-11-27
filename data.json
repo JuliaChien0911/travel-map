@@ -249,26 +249,6 @@
    "closed": [],
    "note": "",
    "addr": "台南市東區青年路435號"
-  },
-  {
-   "id": "u6ynz8xfk",
-   "tripId": "6mpob8ib4",
-   "name": "云如意茶館",
-   "lat": 24.1670809,
-   "lng": 120.7189948,
-   "tags": [
-    "food"
-   ],
-   "srcUrl": "https://www.instagram.com/reel/De9JC5TpqOf/?fqnt=eXM4azNrdXB2a3Vv",
-   "hours": null,
-   "nameLocal": "",
-   "address": "景賢路, 水景里, 北屯區, 臺中市, 406, 臺灣",
-   "hoursText": "",
-   "closed": [
-    2
-   ],
-   "note": "",
-   "addr": "406臺中市北屯區廍子里景賢路288號"
   }
  ]
 }
