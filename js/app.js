@@ -311,7 +311,7 @@ const H = {
   'origin-gps': () => { S.origin = { type: 'gps' }; saveUi(); closeSheet(); locate(); },
   'origin-anchor': (el) => { S.origin = { type: 'anchor', id: el.dataset.v }; saveUi(); closeSheet(); render(); },
   trips: () => openSheet('trips'),
-  'trip-pick': (el) => { S.tripId = el.dataset.v; S.list = 'all'; S.kinds.clear(); S.origin = defaultOrigin(); saveUi(); closeSheet(); render(); },
+  'trip-pick': (el) => { S.tripId = el.dataset.v; S.list = 'all'; S.kinds.clear(); S.origin = defaultOrigin(); saveUi(); closeSheet(); render(); if (S.origin.type === 'gps') locate(); },
   'toggle-edit': () => { S.edit = !S.edit; editOff = !S.edit; saveUi(); render(); toast(S.edit ? '編輯模式：修改會存到雲端' : '檢視模式'); },
   settings: () => openSheet('settings', { ...(store.getCfg() || store.guessRepo()) }),
 
@@ -322,8 +322,8 @@ const H = {
     const F = S.sheet.F; if (!F.name.trim()) return toast('請輸入旅程名稱');
     try { new Intl.DateTimeFormat('en', { timeZone: F.tz.trim() }); } catch { return toast('時區格式不對，例：Asia/Tokyo'); }
     if (F.id) { const t = trip(); t.name = F.name.trim(); t.tz = F.tz.trim(); }
-    else { const t = { id: uid(), name: F.name.trim(), country: '', tz: F.tz.trim(), anchors: [] }; S.data.trips.push(t); S.tripId = t.id; S.origin = null; S.list = 'all'; S.kinds.clear(); }
-    persist(); saveUi(); closeSheet(); render();
+    else { const t = { id: uid(), name: F.name.trim(), country: '', tz: F.tz.trim(), anchors: [] }; S.data.trips.push(t); S.tripId = t.id; S.list = 'all'; S.kinds.clear(); S.origin = defaultOrigin(); }
+    persist(); saveUi(); closeSheet(); render(); if (S.origin?.type === 'gps' && !S.gps) locate();
   },
 
   // 基地點
@@ -335,7 +335,7 @@ const H = {
   },
   'anchor-del': (el, id, e) => {
     e.stopPropagation(); const t = trip(); t.anchors = t.anchors.filter(a => a.id !== el.dataset.v);
-    if (S.origin?.id === el.dataset.v) S.origin = defaultOrigin(); persist(); saveUi(); renderSheet(); render();
+    if (S.origin?.id === el.dataset.v) S.origin = defaultOrigin(); persist(); saveUi(); renderSheet(); render(); if (S.origin?.type === 'gps' && !S.gps) locate();
   },
 
   // 店家
