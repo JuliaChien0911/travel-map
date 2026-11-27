@@ -97,4 +97,7 @@ h1,h2,h3{margin:0}
 ol{padding-left:22px;margin:8px 0}li{margin:7px 0}
 details{margin:8px 0;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:13px}summary{font-weight:600;cursor:pointer}
 
+.btn.ghost{background:transparent;border-style:dashed;color:var(--muted)}
+.alts{margin:6px 0}.alts summary{color:var(--muted);cursor:pointer;padding:4px 0}
+.results li.sel{background:rgba(0,0,0,.05)}.results li.sel b::before{content:'✓ '}
 @media (min-width:700px){body{box-shadow:0 0 0 1px var(--line)}.sheet{border-radius:22px}}

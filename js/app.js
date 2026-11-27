@@ -136,6 +136,26 @@ function parseClip(t) {
   const name = t.replace(url, '').replace(/\s+/g, ' ').trim();
   return { url, name: name.length <= 60 ? name : '' };
 }
+// 把貼上的文字拆成「店名／地址／連結」（支援 Google 地圖分享文字：店名換行地址換行連結）
+const ADDR_TW = /(\d{3,6}\s*)?(台灣|臺灣)?\s*[\u4e00-\u9fff]{2}[縣市][\u4e00-\u9fff]{1,4}[區鄉鎮市]/;
+const looksAddr = l => ADDR_TW.test(l) || /〒\s*\d{3}-?\d{4}/.test(l) || /[都道府県].*[0-9０-９]/.test(l) || /[路街段巷弄]\s*[0-9０-９]+\s*號/.test(l);
+function splitPaste(t) {
+  const url = (t.match(/https?:\/\/\S+/) || [''])[0];
+  const lines = t.replace(url, '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  let name = '', addr = '';
+  if (lines.length > 1) {
+    const i = lines.findIndex(looksAddr);
+    if (i >= 0) { addr = lines[i]; name = lines.filter((_, j) => j !== i)[0] || ''; } else name = lines[0];
+  } else if (lines.length) {
+    const l = lines[0], m = l.match(ADDR_TW);
+    if (m && m.index > 0) { name = l.slice(0, m.index).trim(); addr = l.slice(m.index).trim(); }
+    else if (looksAddr(l)) addr = l; else name = l;
+  }
+  return { url, name: name.length <= 60 ? name : '', addr };
+}
+// 搜尋用：去掉郵遞區號、「台灣」、日本郵遞區號
+const cleanAddr = a => a.replace(/^\s*〒?\s*\d{3}-?\d{4}\s*/, '').replace(/^\s*\d{3,6}\s*/, '').replace(/^(台灣|臺灣|日本)[、,\s]*/, '').trim();
+
 async function readClip(manual) {
   const sh = S.sheet; if (!sh || sh.type !== 'quick') return;
   try {
@@ -325,13 +345,23 @@ function placeForm() {
   const F = S.sheet.F, tags = S.data.tags;
   const lists = tags.filter(t => t.group === 'list'), kinds = tags.filter(t => t.group === 'kind');
   return `<h2>${F.id ? '編輯店家' : '新增店家'}</h2>
-  <label>名稱<input data-f="name" value="${esc(F.name)}" placeholder="例：一蘭 道頓堀店"></label>
-  <label>當地名稱（選填）<input data-f="nameLocal" value="${esc(F.nameLocal)}"></label>
+  <p class="muted small">貼上地址（可以連店名、Google 地圖分享的文字一起貼），按搜尋就好。</p>
+  <div class="row"><input data-f="q" placeholder="貼上地址或店名＋地址" value="${esc(F.q || '')}"><button class="btn pri" data-act="loc-search">搜尋</button></div>
+  <button class="btn wide" data-act="place-paste">📋 從剪貼簿貼上並搜尋</button>
+  ${F.busy ? '<p class="muted">搜尋中…</p>' : ''}
+  ${F.lat != null ? `<div class="okbox">📍 已定位　<small>${esc((F.address || '').slice(0, 44)) || F.lat.toFixed(5) + ', ' + F.lng.toFixed(5)}</small></div>` : (F.results && !F.results.length ? '<div class="warnbox">找不到位置。可以直接儲存（會放進「📥 待整理」），或在下面「更多」用地圖點選。</div>' : '')}
+  ${F.results && F.results.length > 1 ? `<details class="alts"><summary class="small">位置不對？看其他結果（${F.results.length}）</summary><ul class="results">${F.results.map((r, i) => `<li data-act="loc-pick" data-i="${i}" class="${r.lat === F.lat && r.lng === F.lng ? 'sel' : ''}"><b>${esc(r.name)}</b><small>${esc(r.address)}</small></li>`).join('')}</ul></details>` : ''}
+  <label>店名<input data-f="name" value="${esc(F.name)}" placeholder="不填就用地址當名稱"></label>
   ${F.srcUrl ? `<p class="small"><a href="${esc(F.srcUrl)}" target="_blank" rel="noopener">看原貼文 ↗</a></p>` : ''}
-  <label>地址（從 Google 地圖複製，導航會用「店名＋地址」找到正確的店）<input data-f="addr" value="${esc(F.addr)}" placeholder="例：台南市北區海安路三段926號"></label>
-  <div class="lab">大概位置（只用來排距離，不用很精準）</div>${locBlock(F)}
-  <div class="lab">清單</div>
   <div class="chips wrap">${lists.map(t => `<button class="chip ${F.list === t.id ? 'on' : ''}" data-act="f-list" data-v="${t.id}">${t.emoji} ${esc(t.label)}</button>`).join('')}</div>
+  <div class="row2b"><button class="btn pri" data-act="place-save">儲存</button><button class="btn" data-act="close">取消</button></div>
+  <button class="btn wide ghost" data-act="f-more">${F.more ? '收起 ▴' : '更多（類型、營業時間、備註、其他定位方式）▾'}</button>
+  ${F.more ? `
+  <label>地址（導航用「店名＋地址」找店）<input data-f="addr" value="${esc(F.addr)}" placeholder="例：台南市北區海安路三段926號"></label>
+  <label>當地名稱（選填）<input data-f="nameLocal" value="${esc(F.nameLocal)}"></label>
+  <div class="lab">其他定位方式</div>
+  <div class="row"><button class="btn" data-act="loc-gps">用目前位置</button><button class="btn" data-act="loc-map">地圖點選</button></div>
+  <div class="row"><input data-f="gurl" placeholder="貼上座標／Google 地圖連結" value="${esc(F.gurl || '')}"><button class="btn" data-act="loc-url">解析</button></div>
   <div class="lab">類型（可複選）</div>
   <div class="chips wrap">${kinds.map(t => `<button class="chip ${F.kinds.includes(t.id) ? 'on' : ''}" data-act="f-pkind" data-v="${t.id}">${t.emoji} ${esc(t.label)}</button>`).join('')}</div>
   <div class="row"><input data-f="newKind" placeholder="新增類型，如 🍣 壽司" value="${esc(F.newKind || '')}"><button class="btn" data-act="f-addkind">加入</button></div>
@@ -341,7 +371,7 @@ function placeForm() {
   <div class="chips wrap">${[1, 2, 3, 4, 5, 6, 0].map(d => `<button class="chip ${F.closed.includes(d) ? 'on' : ''}" data-act="f-closed" data-v="${d}">${DAYS[d]}</button>`).join('')}</div>
   <div id="hp" class="hint">${hoursPreview(F)}</div>
   <label>備註（想吃什麼、注意事項）<input data-f="note" value="${esc(F.note)}"></label>
-  <div class="row2b"><button class="btn pri" data-act="place-save">儲存</button><button class="btn" data-act="close">取消</button></div>
+  <div class="row2b"><button class="btn pri" data-act="place-save">儲存</button><button class="btn" data-act="close">取消</button></div>` : ''}
   ${F.id ? `<button class="btn danger wide" data-act="place-del">${F.confirmDel ? '再按一次確定刪除' : '刪除這間店'}</button>` : ''}`;
 }
 function hoursPreview(F) {
@@ -435,7 +465,7 @@ const H = {
   'place-edit': (el, id) => {
     const p = placeOf(id), lt = p.tags.find(i => tagOf(i)?.group === 'list');
     openSheet('place', { id, name: p.name, nameLocal: p.nameLocal || '', addr: p.addr || '', lat: p.lat, lng: p.lng, address: p.address || '', list: lt || 'food',
-      srcUrl: p.srcUrl || '', kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', q: p.lat == null && p.name !== '（待命名）' ? (p.addr || p.name) : '' });
+      srcUrl: p.srcUrl || '', kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', more: p.lat != null, q: p.lat == null ? (p.addr || (p.name !== '（待命名）' ? p.name : '')) : '' });
   },
   'f-list': (el) => { S.sheet.F.list = el.dataset.v; renderSheet(); },
   'f-pkind': (el) => { const k = S.sheet.F.kinds, v = el.dataset.v; const i = k.indexOf(v); i < 0 ? k.push(v) : k.splice(i, 1); renderSheet(); },
@@ -448,16 +478,21 @@ const H = {
   },
   'place-save': () => {
     const F = S.sheet.F;
-    if (!F.name.trim()) return toast('請輸入名稱'); if (F.lat == null) return toast('請先設定位置');
+    const addr0 = (F.addr || '').trim() || (F.q || '').trim();
+    if (!F.name.trim() || F.name.trim() === '（待命名）') F.name = addr0 ? cleanAddr(addr0).slice(0, 40) : '';
+    if (!F.name.trim() && !F.srcUrl) return toast('請貼上地址或輸入店名');
+    if (!F.name.trim()) F.name = '（待命名）';
+    if (!(F.addr || '').trim() && looksAddr(addr0)) F.addr = addr0;
     const hours = F.hoursText.trim() ? parseHours(F.hoursText, F.closed) : null;
     if (F.hoursText.trim() && !hours) return toast('營業時間格式看不懂，請修正或清空');
     const base = F.id ? placeOf(F.id) : { id: uid(), tripId: S.tripId };
     Object.assign(base, { name: F.name.trim(), nameLocal: F.nameLocal.trim(), lat: F.lat, lng: F.lng, address: F.address, tags: [F.list, ...F.kinds],
       hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), tripId: base.tripId || S.tripId, addr: (F.addr || '').trim() || undefined, gmapsUrl: F.gmapsUrl || undefined, srcUrl: F.srcUrl || undefined });
     delete base.sample; delete base.pending;
+    if (F.lat == null) { base.lat = null; base.lng = null; base.pending = true; }
     if (!F.id) S.data.places.push(base);
     if (S.pendingView && !S.data.places.some(x => x.tripId === S.tripId && x.lat == null)) S.pendingView = false;
-    persist(); closeSheet(); render(); toast('已儲存');
+    persist(); closeSheet(); render(); toast(base.pending ? '已儲存到「📥 待整理」（還沒有位置）' : '已儲存');
   },
   'place-del': () => {
     const F = S.sheet.F; if (!F.confirmDel) { F.confirmDel = true; return renderSheet(); }
@@ -482,21 +517,39 @@ const H = {
 
   // 位置選擇
   'loc-search': async () => {
-    const F = S.sheet.F, nm = (F.name || '').trim() === '（待命名）' ? '' : (F.name || '').trim();
-    const q = ((F.q || '').trim() === '（待命名）' ? '' : (F.q || '').trim()) || (F.addr || '').trim() || nm; if (!q) return toast('請輸入要搜尋的名稱');
-    F.q = q; F.busy = true; F.results = null; renderSheet();
-    if (/號|路|街|巷|段/.test(q) && !(F.addr || '').trim()) F.addr = q;
+    const F = S.sheet.F, isPlace = S.sheet.type === 'place', nm = (F.name || '').trim() === '（待命名）' ? '' : (F.name || '').trim();
+    let q = ((F.q || '').trim() === '（待命名）' ? '' : (F.q || '').trim()) || (F.addr || '').trim() || nm; if (!q) return toast('請貼上地址或店名');
+    if (isPlace) {
+      const sp = splitPaste(q);
+      if (sp.url) { const r = parseMapsUrl(sp.url); F.gmapsUrl = sp.url; if (r?.lat != null) { F.lat = r.lat; F.lng = r.lng; } if (r?.name && !nm) F.name = r.name; }
+      if (sp.name && (!nm || nm === F.autoName)) { F.name = sp.name; F.autoName = sp.name; }
+      if (sp.addr) F.addr = sp.addr;
+      else if (/號|路|街|巷|段/.test(q) && !sp.name) F.addr = q;
+      q = sp.addr ? cleanAddr(sp.addr) : (sp.name || q);
+      if (sp.url && !sp.addr && !sp.name && F.lat != null) { F.q = ''; renderSheet(); return toast('已從連結取得位置'); }
+    }
+    F.busy = true; F.results = null; renderSheet();
     const near = biasPt();
     try {
       F.results = await search(q, near);
       const q2 = simplify(q);
-      if (!F.results.length && q2 && q2 !== q) { F.results = await search(q2, near); if (F.results.length) toast('找不到精確門牌，先顯示路段位置（夠用了）'); }
+      if (!F.results.length && q2 && q2 !== q) { F.results = await search(q2, near); if (F.results.length) toast('找不到門牌，先用路段位置（夠用了）'); }
     } catch { F.results = []; toast('搜尋失敗，請檢查網路'); }
-    F.busy = false; renderSheet();
+    F.busy = false;
+    if (isPlace && F.results.length) { const r = F.results[0]; F.lat = r.lat; F.lng = r.lng; F.address = r.address; }
+    renderSheet();
   },
+  'place-paste': async () => {
+    try {
+      const t = ((await navigator.clipboard.readText()) || '').trim();
+      if (!t) return toast('剪貼簿是空的');
+      S.sheet.F.q = t; H['loc-search']();
+    } catch { toast('無法讀取剪貼簿，請長按搜尋欄貼上'); }
+  },
+  'f-more': () => { S.sheet.F.more = !S.sheet.F.more; renderSheet(); },
   'loc-pick': (el) => {
     const F = S.sheet.F, r = F.results[+el.dataset.i];
-    F.lat = r.lat; F.lng = r.lng; F.address = r.address; if (!F.name.trim()) F.name = r.name; F.results = null; renderSheet();
+    F.lat = r.lat; F.lng = r.lng; F.address = r.address; if (S.sheet.type === 'place') return renderSheet(); if (!F.name.trim()) F.name = r.name; F.results = null; renderSheet();
   },
   'loc-gps': () => {
     const F = S.sheet.F;
