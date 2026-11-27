@@ -191,15 +191,64 @@
   {
    "id": "mdzvwy8bt",
    "tripId": "l94kmahdz",
-   "name": "（待命名）",
-   "lat": null,
-   "lng": null,
+   "name": "川井堂手工麻吉",
+   "lat": 23.01669,
+   "lng": 120.19718,
    "tags": [
-    "food"
+    "food",
+    "street"
    ],
-   "pending": true,
    "srcUrl": "https://www.instagram.com/reel/DgNPPhQzAJu/?fqnt=MTIzbDl3eTFyMjE3Yw==",
-   "hours": null
+   "hours": [
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ]
+   ],
+   "nameLocal": "",
+   "address": "",
+   "hoursText": "14:00-21:00",
+   "closed": [],
+   "note": "",
+   "addr": "台南市東區青年路435號"
   }
  ]
 }
