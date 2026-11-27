@@ -33,6 +33,14 @@ let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400); }
 const emojiOf = ids => ids.map(i => tagOf(i)).filter(Boolean).map(t => t.emoji).join('');
 
+// 搜尋偏好中心：旅程基地點 → 旅程內店家的中心 → 目前出發點（不直接用 GPS，因為人不一定在旅程所在地）
+function biasPt() {
+  const t = trip(); if (!t) return originPt();
+  if (t.anchors[0]) return t.anchors[0];
+  const ps = S.data.places.filter(p => p.tripId === t.id && p.lat != null);
+  if (ps.length) return { lat: ps.reduce((a, p) => a + p.lat, 0) / ps.length, lng: ps.reduce((a, p) => a + p.lng, 0) / ps.length };
+  return originPt();
+}
 function originPt() {
   const o = S.origin, t = trip();
   if (!o || !t) return null;
@@ -478,7 +486,7 @@ const H = {
     const q = ((F.q || '').trim() === '（待命名）' ? '' : (F.q || '').trim()) || (F.addr || '').trim() || nm; if (!q) return toast('請輸入要搜尋的名稱');
     F.q = q; F.busy = true; F.results = null; renderSheet();
     if (/號|路|街|巷|段/.test(q) && !(F.addr || '').trim()) F.addr = q;
-    const near = F.near || originPt() || trip()?.anchors[0];
+    const near = biasPt();
     try {
       F.results = await search(q, near);
       const q2 = simplify(q);
