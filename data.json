@@ -169,6 +169,23 @@
    "hours": null,
    "note": "範例資料：請自行刪除或改成你的清單",
    "sample": true
+  },
+  {
+   "id": "lipm4pczr",
+   "tripId": "l94kmahdz",
+   "name": "蚵男",
+   "nameLocal": "",
+   "lat": 23.018802738229695,
+   "lng": 120.20017951726915,
+   "address": "",
+   "tags": [
+    "food",
+    "ys7ffi6cd"
+   ],
+   "hours": null,
+   "hoursText": "",
+   "closed": [],
+   "note": ""
   }
  ]
 }
