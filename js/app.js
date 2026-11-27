@@ -619,7 +619,11 @@ function handleSetupHash() {
 async function reload() {
   const { data, from, error } = await store.load();
   S.loadErr = error;
-  if (data) { S.data = data; S.from = from; }
+  if (data) {
+    S.data = data; S.from = from;
+    // 依最新的解析規則重算營業時間（舊版存錯的會自動更正）
+    for (const p of data.places) if (p.hoursText?.trim()) { const w = parseHours(p.hoursText, p.closed || []); if (w) p.hours = w; }
+  }
   if (!trip()) S.tripId = S.data.trips[0]?.id || null;
 }
 async function boot() {
