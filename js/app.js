@@ -7,15 +7,16 @@ import { HELP, HELP_UPDATED } from './help.js';
 const RADII = [0, 500, 1000, 2000, 5000];
 const TZS = ['Asia/Tokyo', 'Europe/Berlin', 'Asia/Seoul', 'Asia/Taipei', 'Asia/Bangkok', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York'];
 let marks = store.jget('tm.marks', {});
+const lastList = () => store.jget('tm.ui', {}).lastList;
 const ui = store.jget('tm.ui', {});
 
 const S = {
   data: { version: 1, trips: [], tags: [], places: [] }, from: '', tripId: null, edit: false,
   origin: ui.origin || null, gps: null, gpsMsg: '', list: 'all', kinds: new Set(), openOnly: false, unvisited: false,
-  radius: ui.radius || 0, view: 'list', expanded: null, sheet: null, saveSt: ''
+  lastList: ui.lastList, radius: ui.radius || 0, view: 'list', expanded: null, sheet: null, saveSt: ''
 };
 let editOff = !!ui.editOff;  // 只在使用者手動切換時記住
-const saveUi = () => store.jset('tm.ui', { origin: S.origin, radius: S.radius, tripId: S.tripId, editOff });
+const saveUi = () => store.jset('tm.ui', { origin: S.origin, radius: S.radius, tripId: S.tripId, editOff, lastList: S.lastList });
 
 // ---------- 小工具 ----------
 const trip = () => S.data.trips.find(t => t.id === S.tripId);
@@ -119,6 +120,27 @@ function render() {
   </main>
   ${S.edit ? '<button class="fab fab2" data-act="quick-new" aria-label="快速收藏">⚡</button><button class="fab" data-act="place-new" aria-label="新增店家">＋</button>' : ''}`;
   if (S.view === 'map' && !S.pendingView) drawMap(list, o);
+}
+
+// 從剪貼簿帶入：可能是連結，也可能是「店名＋連結」（例如 Google 地圖分享文字）
+function parseClip(t) {
+  const url = (t.match(/https?:\/\/\S+/) || [''])[0];
+  const name = t.replace(url, '').replace(/\s+/g, ' ').trim();
+  return { url, name: name.length <= 60 ? name : '' };
+}
+async function readClip(manual) {
+  const sh = S.sheet; if (!sh || sh.type !== 'quick') return;
+  try {
+    const t = ((await navigator.clipboard.readText()) || '').trim();
+    if (!t) { if (manual) toast('剪貼簿是空的'); return; }
+    const c = parseClip(t);
+    if (!c.url && !manual) return;
+    if (S.sheet !== sh) return;
+    if (c.url) sh.F.srcUrl = c.url;
+    if (c.name && !sh.F.name.trim()) sh.F.name = c.name;
+    if (!c.url && !c.name) return;
+    renderSheet(); toast('已從剪貼簿帶入');
+  } catch { if (manual) toast('無法讀取剪貼簿，請長按輸入欄貼上'); }
 }
 
 function pcard(p) {
@@ -299,7 +321,7 @@ function hoursPreview(F) {
 }
 function quickForm() {
   const F = S.sheet.F, lists = S.data.tags.filter(t => t.group === 'list');
-  return `<h2>⚡ 快速收藏</h2><p class="muted small">先存起來，之後在「📥 待整理」再補位置和營業時間。</p>
+  return `<h2>⚡ 快速收藏</h2><p class="muted small">先複製貼文連結，再開這裡，會自動帶入。直接按「收藏」就好，店名可以不填。</p>
   <label>店名（或隨手備註）<input data-f="name" value="${esc(F.name)}" placeholder="例：台中 某某牛肉麵"></label>
   <div class="lab">貼文連結（選填）</div>
   <div class="row"><input data-f="srcUrl" value="${esc(F.srcUrl)}" placeholder="IG / FB / Threads 連結"><button class="btn" data-act="quick-paste">貼上</button></div>
@@ -414,14 +436,15 @@ const H = {
 
   // 快速收藏
   pend: () => { S.pendingView = !S.pendingView; render(); },
-  'quick-new': () => openSheet('quick', { name: '', srcUrl: '', list: S.list !== 'all' ? S.list : 'food' }),
-  'quick-paste': async () => {
-    try { const t = (await navigator.clipboard.readText()).trim(); if (t) { S.sheet.F.srcUrl = t; renderSheet(); } else toast('剪貼簿是空的'); }
-    catch { toast('無法讀取剪貼簿，請長按輸入欄貼上'); }
+  'quick-new': () => {
+    openSheet('quick', { name: '', srcUrl: '', list: S.list !== 'all' ? S.list : (S.lastList || 'food') });
+    readClip();
   },
+  'quick-paste': () => readClip(true),
   'quick-save': () => {
     const F = S.sheet.F, name = F.name.trim(), url = (F.srcUrl || '').trim();
     if (!name && !url) return toast('請輸入店名，或貼上連結');
+    S.lastList = F.list; saveUi();
     S.data.places.push({ id: uid(), tripId: S.tripId, name: name || '（待命名）', lat: null, lng: null, tags: [F.list || 'food'], pending: true, srcUrl: url || undefined, hours: null });
     persist(); closeSheet(); render(); toast('已收藏，記得之後補資料');
   },
