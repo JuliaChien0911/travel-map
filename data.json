@@ -185,7 +185,8 @@
    "hours": null,
    "hoursText": "",
    "closed": [],
-   "note": ""
+   "note": "",
+   "visited": true
   }
  ]
 }
