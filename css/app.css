@@ -122,4 +122,5 @@ details{margin:8px 0;padding:10px 12px;background:var(--card);border:1px solid v
 .badges{display:flex;gap:4px;margin-top:4px}.bd{font-style:normal;font-size:11px;padding:1px 8px;border-radius:99px;background:#f3e3da;color:var(--accent)}
 .bd.ok{background:#dcefe2;color:var(--green)}.bd.shop{background:#f6e0ea;color:#b03a6a}
 .hbtn{flex:none;width:40px;height:40px;font-size:20px;color:var(--muted)}
+.fscope{display:flex;gap:8px;padding:12px 14px 0;overflow-x:auto}.fscope .chip{max-width:70vw;overflow:hidden;text-overflow:ellipsis}
 @media (min-width:700px){body{box-shadow:0 0 0 1px var(--line)}.sheet{border-radius:22px}}

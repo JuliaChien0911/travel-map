@@ -12,7 +12,7 @@ const ui = store.jget('tm.ui', {});
 
 const S = {
   data: { version: 1, trips: [], tags: [], places: [] }, from: '', tripId: null, edit: false,
-  origin: ui.origin || null, gps: null, gpsMsg: '', list: 'all', kinds: new Set(), openOnly: false, visit: 'all', favStat: 'all',
+  origin: ui.origin || null, gps: null, gpsMsg: '', list: 'all', kinds: new Set(), openOnly: false, visit: 'all', favStat: 'all', favAll: false,
   lastList: ui.lastList, radius: ui.radius || 0, view: 'list', expanded: null, sheet: null, saveSt: ''
 };
 let editOff = !!ui.editOff;  // 只在使用者手動切換時記住
@@ -233,14 +233,15 @@ const VISIT = { all: '全部', unvisited: '還沒去過', visited: '已去過', 
 
 // ---------- 我的收藏 ----------
 function favHtml() {
-  const all = S.data.places.filter(p => p.lat != null && p.tripId).map(p => ({ p, m: mark(p) }));
+  const all = S.data.places.filter(p => p.lat != null && p.tripId && (S.favAll || p.tripId === S.tripId)).map(p => ({ p, m: mark(p) }));
   const inList = all.filter(x => S.list === 'all' || x.p.tags.includes(S.list));
   const n = { all: inList.length, visited: inList.filter(x => x.m.visited).length, want: inList.filter(x => x.m.want).length };
   const rows = inList.filter(x => S.favStat === 'all' || x.m[S.favStat]);
-  const tname = id => S.data.trips.find(t => t.id === id)?.name || '';
+  const tname = id => S.favAll ? S.data.trips.find(t => t.id === id)?.name || '' : '';
   rows.sort((a, b) => (b.m.want - a.m.want) || (a.p.tripId === S.tripId ? -1 : 0) - (b.p.tripId === S.tripId ? -1 : 0) || a.p.name.localeCompare(b.p.name, 'zh-Hant'));
   const tile = (k, ic, lb) => `<button class="tile ${S.favStat === k ? 'on' : ''}" data-act="fav-stat" data-v="${k}"><span>${ic}</span><small>${lb}</small><b>${n[k]}</b></button>`;
-  return `<div class="tiles">${tile('all', '⭐', '收藏')}${tile('visited', '✅', '已去過')}${tile('want', '❤️', '想去')}</div>
+  return `<div class="fscope"><button class="chip ${S.favAll ? '' : 'on'}" data-act="fav-all" data-v="0">📁 ${esc(trip().name)}</button><button class="chip ${S.favAll ? 'on' : ''}" data-act="fav-all" data-v="1">全部旅程</button></div>
+  <div class="tiles">${tile('all', '⭐', '收藏')}${tile('visited', '✅', '已去過')}${tile('want', '❤️', '想去')}</div>
   <div class="favs">${rows.map(({ p, m }) => {
     const lt = p.tags.map(tagOf).find(t => t?.group === 'list'), kd = p.tags.map(tagOf).filter(t => t?.group === 'kind').map(t => t.label).join('・');
     return `<div class="frow ${m.visited ? 'done' : ''}" data-id="${p.id}">
@@ -469,6 +470,7 @@ const H = {
   'rm-visit': () => { S.visit = 'all'; render(); },
   'rm-rad': () => { S.radius = 0; saveUi(); render(); },
   want: (el, id) => { const p = placeOf(id), m = mark(p); setMark(p, { want: !m.want }); render(); toast(m.want ? '已取消想去' : '❤️ 加入想去'); },
+  'fav-all': (el) => { S.favAll = el.dataset.v === '1'; render(); },
   'fav-stat': (el) => { S.favStat = el.dataset.v; render(); },
   'fav-open': (el, id) => {
     const p = placeOf(id);
