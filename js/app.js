@@ -427,7 +427,7 @@ const H = {
   'place-edit': (el, id) => {
     const p = placeOf(id), lt = p.tags.find(i => tagOf(i)?.group === 'list');
     openSheet('place', { id, name: p.name, nameLocal: p.nameLocal || '', addr: p.addr || '', lat: p.lat, lng: p.lng, address: p.address || '', list: lt || 'food',
-      srcUrl: p.srcUrl || '', kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', q: p.lat == null ? p.name : '' });
+      srcUrl: p.srcUrl || '', kinds: p.tags.filter(i => tagOf(i)?.group === 'kind'), hoursText: p.hoursText || (p.hours ? summarize(p.hours).join('\n') : ''), closed: p.closed || [], note: p.note || '', gmapsUrl: p.gmapsUrl || '', q: p.lat == null && p.name !== '（待命名）' ? (p.addr || p.name) : '' });
   },
   'f-list': (el) => { S.sheet.F.list = el.dataset.v; renderSheet(); },
   'f-pkind': (el) => { const k = S.sheet.F.kinds, v = el.dataset.v; const i = k.indexOf(v); i < 0 ? k.push(v) : k.splice(i, 1); renderSheet(); },
@@ -474,7 +474,8 @@ const H = {
 
   // 位置選擇
   'loc-search': async () => {
-    const F = S.sheet.F, q = (F.q || F.name || '').trim(); if (!q) return toast('請輸入要搜尋的名稱');
+    const F = S.sheet.F, nm = (F.name || '').trim() === '（待命名）' ? '' : (F.name || '').trim();
+    const q = ((F.q || '').trim() === '（待命名）' ? '' : (F.q || '').trim()) || (F.addr || '').trim() || nm; if (!q) return toast('請輸入要搜尋的名稱');
     F.q = q; F.busy = true; F.results = null; renderSheet();
     if (/號|路|街|巷|段/.test(q) && !(F.addr || '').trim()) F.addr = q;
     const near = F.near || originPt() || trip()?.anchors[0];
