@@ -249,6 +249,19 @@
    "closed": [],
    "note": "",
    "addr": "台南市東區青年路435號"
+  },
+  {
+   "id": "0yonq4loo",
+   "tripId": "6mpob8ib4",
+   "name": "（待命名）",
+   "lat": null,
+   "lng": null,
+   "tags": [
+    "food"
+   ],
+   "pending": true,
+   "srcUrl": "https://www.instagram.com/reel/De9JC5TpqOf/?cnvx=eXM4azNrdXB2a3Vv",
+   "hours": null
   }
  ]
 }
