@@ -4,7 +4,7 @@ import * as store from './store.js';
 import { search, parseMapsUrl } from './geocode.js';
 
 const RADII = [0, 500, 1000, 2000, 5000];
-const TZS = ['Asia/Tokyo', 'Asia/Seoul', 'Asia/Taipei', 'Asia/Bangkok', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York'];
+const TZS = ['Asia/Tokyo', 'Europe/Berlin', 'Asia/Seoul', 'Asia/Taipei', 'Asia/Bangkok', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York'];
 let marks = store.jget('tm.marks', {});
 const ui = store.jget('tm.ui', {});
 
@@ -203,7 +203,11 @@ function originSheet() {
 
 function tripsSheet() {
   return `<h2>選擇旅程</h2>
-  ${S.data.trips.map(t => `<button class="opt ${t.id === S.tripId ? 'on' : ''}" data-act="trip-pick" data-v="${t.id}">✈️ <span>${esc(t.name)}<small>${esc(t.tz)}</small></span></button>`).join('')}
+  ${S.data.trips.map(t => {
+    const ps = S.data.places.filter(p => p.tripId === t.id);
+    const near = S.gps && ps.length ? Math.min(...ps.map(p => dist(S.gps, p))) : null;
+    return `<button class="opt ${t.id === S.tripId ? 'on' : ''}" data-act="trip-pick" data-v="${t.id}">📁 <span>${esc(t.name)}<small>${ps.length} 間${near != null ? `・離你最近 ${fmtDist(near)}` : ''}</small></span></button>`;
+  }).join('')}
   ${S.edit ? '<button class="opt add" data-act="trip-new">＋ 新旅程</button><button class="opt add" data-act="trip-edit">✎ 修改目前旅程</button>' : ''}
   <button class="btn wide" data-act="close">關閉</button>`;
 }
