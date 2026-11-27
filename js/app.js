@@ -79,7 +79,7 @@ function render() {
   }
   if (!S.edit) S.pendingView = false;
   const o = originPt(), list = filtered(o), now = nowInTz(t.tz);
-  const pend = S.data.places.filter(p => p.tripId === t.id && p.lat == null);
+  const pend = S.data.places.filter(p => (p.tripId === t.id || p.tripId == null) && p.lat == null);
   const lists = S.data.tags.filter(x => x.group === 'list');
   const used = new Set(S.data.places.filter(p => p.tripId === t.id).flatMap(p => p.tags));
   const kinds = S.data.tags.filter(x => x.group === 'kind' && (used.has(x.id) || S.kinds.has(x.id)));
@@ -143,9 +143,29 @@ async function readClip(manual) {
   } catch { if (manual) toast('無法讀取剪貼簿，請長按輸入欄貼上'); }
 }
 
+async function pullInbox() {
+  if (!S.edit || S.pulling) return;
+  S.pulling = true;
+  try {
+    const items = await store.fetchInbox();
+    if (!items.length) return;
+    const have = new Set(S.data.places.map(p => p.inboxId).filter(Boolean));
+    let n = 0;
+    for (const it of items) {
+      if (have.has(it.name)) continue;
+      const c = parseClip(it.text.trim());
+      S.data.places.push({ id: uid(), tripId: null, name: c.name || '（待命名）', lat: null, lng: null, tags: [S.lastList || 'food'], pending: true, srcUrl: c.url || undefined, hours: null, inboxId: it.name });
+      n++;
+    }
+    S.afterSaved = () => store.deleteInbox(items);
+    if (n) { persist(); render(); toast(`收到 ${n} 筆新收藏（在「📥 待整理」）`); } else store.deleteInbox(items);
+  } finally { S.pulling = false; }
+}
+
 function pcard(p) {
   return `<article class="card" data-id="${p.id}">
     <h3 class="serif" style="font-size:19px">📥 ${esc(p.name)}</h3>
+    ${p.tripId == null ? '<p class="sub">收件匣（補資料時會放進目前旅程）</p>' : ''}
     ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
     <div class="r3"><button class="btn pri" data-act="place-edit">補資料</button>
       ${p.srcUrl ? `<a class="btn" href="${esc(p.srcUrl)}" target="_blank" rel="noopener">原貼文 ↗</a>` : ''}
@@ -179,6 +199,7 @@ function card({ p, d, st, m }) {
 
 function saveText() { return { pending: '…', saving: '儲存中', saved: '☁︎ 已儲存', error: '⚠︎ 未儲存' }[S.saveSt] || ''; }
 store.onStatus((st, msg) => {
+  if (st === 'saved' && S.afterSaved) { const f = S.afterSaved; S.afterSaved = null; f(); }
   S.saveSt = st; const el = $('#savest'); if (el) { el.className = 'savest ' + st; el.textContent = saveText(); }
   if (st === 'error') toast(msg);
 });
@@ -273,6 +294,7 @@ function settingsSheet() {
     <label>Branch<input data-f="branch" value="${esc(c.branch || 'main')}" autocapitalize="off"></label>
     <label>Token（Contents 讀寫）<input data-f="token" type="password" value="${esc(c.token)}" autocomplete="off"></label>
     <div class="row2b"><button class="btn pri" data-act="cfg-save">儲存並連線</button>${connected ? '<button class="btn" data-act="cfg-clear">中斷連線</button>' : ''}</div>
+    ${connected ? '<button class="btn wide" data-act="cfg-copytoken">📋 複製 Token（做捷徑用）</button><button class="btn wide" data-act="cfg-copyapi">📋 複製捷徑用網址</button>' : ''}
     ${connected ? '<button class="btn wide" data-act="cfg-link">🔗 複製「新裝置設定連結」</button><p class="muted small">連結含 Token，等同密碼，只傳給自己，用完刪除訊息。</p>' : ''}
   </details>
   <p class="muted small">資料來源：${{ api: 'GitHub（最新）', site: '網站', cache: '本機快取（離線）' }[S.from] || '—'}　・　「去過」與短評：${S.edit ? '寫入雲端' : '只存在這支手機'}</p>
@@ -423,7 +445,7 @@ const H = {
     if (F.hoursText.trim() && !hours) return toast('營業時間格式看不懂，請修正或清空');
     const base = F.id ? placeOf(F.id) : { id: uid(), tripId: S.tripId };
     Object.assign(base, { name: F.name.trim(), nameLocal: F.nameLocal.trim(), lat: F.lat, lng: F.lng, address: F.address, tags: [F.list, ...F.kinds],
-      hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), addr: (F.addr || '').trim() || undefined, gmapsUrl: F.gmapsUrl || undefined, srcUrl: F.srcUrl || undefined });
+      hours, hoursText: F.hoursText.trim(), closed: F.closed.slice(), note: F.note.trim(), tripId: base.tripId || S.tripId, addr: (F.addr || '').trim() || undefined, gmapsUrl: F.gmapsUrl || undefined, srcUrl: F.srcUrl || undefined });
     delete base.sample; delete base.pending;
     if (!F.id) S.data.places.push(base);
     if (S.pendingView && !S.data.places.some(x => x.tripId === S.tripId && x.lat == null)) S.pendingView = false;
@@ -435,7 +457,7 @@ const H = {
   },
 
   // 快速收藏
-  pend: () => { S.pendingView = !S.pendingView; render(); },
+  pend: () => { S.pendingView = !S.pendingView; render(); pullInbox(); },
   'quick-new': () => {
     openSheet('quick', { name: '', srcUrl: '', list: S.list !== 'all' ? S.list : (S.lastList || 'food') });
     readClip();
@@ -492,6 +514,8 @@ const H = {
     store.setCfg(c); editOff = false; await reload(); closeSheet(); S.edit = store.hasToken() && !S.loadErr; saveUi(); render();
     toast(S.loadErr ? S.loadErr : '已連線，可以編輯了');
   },
+  'cfg-copytoken': async () => { try { await navigator.clipboard.writeText(store.getCfg().token); toast('已複製 Token，請馬上貼到捷徑'); } catch { toast('複製失敗'); } },
+  'cfg-copyapi': async () => { try { await navigator.clipboard.writeText(store.apiBase()); toast('已複製網址'); } catch { toast('複製失敗'); } },
   'cfg-clear': () => { store.clearCfg(); S.edit = false; saveUi(); closeSheet(); render(); },
   'cfg-link': async () => {
     const c = store.getCfg(), b = btoa(unescape(encodeURIComponent(JSON.stringify(c)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -547,8 +571,9 @@ async function boot() {
   render();
   if (S.loadErr) toast(S.loadErr);
   if (S.origin?.type === 'gps') locate();
+  pullInbox();
   setInterval(() => { if (!S.sheet && document.visibilityState === 'visible') render(); }, 60000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !S.sheet) { if (S.origin?.type === 'gps') locate(); else render(); } });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !S.sheet) { pullInbox(); if (S.origin?.type === 'gps') locate(); else render(); } });
 }
 boot();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

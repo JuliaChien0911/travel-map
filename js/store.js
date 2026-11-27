@@ -70,3 +70,28 @@ async function doSave(data) {
     statusCb('saved');
   } catch { statusCb('error', '網路不通，稍後會再試（資料已暫存在本機）'); }
 }
+
+// 捷徑收件匣：捷徑把分享內容存成 inbox/xxx.txt，App 讀進來後刪除
+export async function fetchInbox() {
+  const c = getCfg(); if (!c?.token) return [];
+  const q = `ref=${encodeURIComponent(c.branch)}`;
+  try {
+    const r = await fetch(`${api(c, 'inbox')}?${q}&t=${Date.now()}`, { headers: hdr(c) });
+    if (!r.ok) return [];
+    const list = (await r.json()).filter(x => x.type === 'file').slice(0, 30), out = [];
+    for (const f of list) {
+      const g = await fetch(`${api(c, f.path)}?${q}`, { headers: hdr(c) });
+      if (!g.ok) continue;
+      const j = await g.json();
+      out.push({ name: f.name, path: f.path, sha: j.sha, text: b64dec(j.content) });
+    }
+    return out;
+  } catch { return []; }
+}
+export async function deleteInbox(items) {
+  const c = getCfg(); if (!c?.token) return;
+  for (const it of items) {
+    try { await fetch(api(c, it.path), { method: 'DELETE', headers: hdr(c), body: JSON.stringify({ message: 'inbox processed', sha: it.sha, branch: c.branch }) }); } catch { /* 下次再刪 */ }
+  }
+}
+export const apiBase = () => { const c = getCfg(); return c ? `https://api.github.com/repos/${c.owner}/${c.repo}/contents/inbox/` : ''; };
