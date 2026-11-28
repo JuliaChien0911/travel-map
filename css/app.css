@@ -123,4 +123,54 @@ details{margin:8px 0;padding:10px 12px;background:var(--card);border:1px solid v
 .bd.ok{background:#dcefe2;color:var(--green)}.bd.shop{background:#f6e0ea;color:#b03a6a}
 .hbtn{flex:none;width:40px;height:40px;font-size:20px;color:var(--muted)}
 .fscope{display:flex;gap:8px;padding:12px 14px 0;overflow-x:auto}.fscope .chip{max-width:70vw;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== 2026-11-28 美化：柔和陰影、圓角、暖色強調（參考 Julia 的設計圖） ===== */
+:root{--paper:#f7f1e7;--card:#fffdf9;--line:#ece2d0;--accent:#c0532c;--accent-soft:#f8e6dc;--shadow:0 2px 10px rgba(120,80,40,.08),0 1px 2px rgba(120,80,40,.06);--shadow-lg:0 8px 24px rgba(120,80,40,.14)}
+html,body{background:linear-gradient(180deg,#fbf6ee 0,#f7f1e7 260px) fixed}
+.top{background:rgba(251,246,238,.9);border-bottom:0;box-shadow:0 1px 0 rgba(120,80,40,.08)}
+.tripbtn .serif{font-size:22px;letter-spacing:.02em}
+.pill-btn{box-shadow:var(--shadow);border-color:transparent}
+.icon-btn{background:var(--card);box-shadow:var(--shadow);width:36px;height:36px;font-size:17px}
+.origin{border:0;border-radius:20px;box-shadow:var(--shadow);padding:13px 16px}
+.origin b{font-family:var(--serif)}
+.seg{background:transparent;padding:0;gap:8px}
+.seg button{background:var(--card);border-radius:99px;padding:9px 4px;box-shadow:var(--shadow);font-size:15px}
+.seg button.on{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(192,83,44,.35)}
+.chip{border-color:transparent;box-shadow:var(--shadow)}
+.chip.on{background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(192,83,44,.28)}
+.chip.filt.on{background:var(--accent);box-shadow:0 3px 10px rgba(192,83,44,.3)}
+.chip.act{background:var(--accent-soft);border-color:transparent;box-shadow:none}
+.bar{padding:12px 16px 6px}
+.vt{border:0;box-shadow:var(--shadow);background:var(--card);padding:3px}
+.vt button{background:transparent;border-radius:99px;padding:4px 13px}
+.vt button.on{background:var(--accent);color:#fff}
+#map{border:0;border-radius:20px;box-shadow:var(--shadow-lg)}
+.cards{gap:14px;padding:8px 14px}
+.card{border:0;border-radius:20px;padding:16px;box-shadow:var(--shadow);transition:transform .15s}
+.card:active{transform:scale(.99)}
+.card.done{background:#f4efe6;opacity:.92}
+.nm h3{font-size:20px;letter-spacing:.01em}
+.ds b{font-size:19px}
+.st{padding:3px 10px}
+.st.closed{background:#fde4dc;color:#c0392b}
+.kt{background:#f3ece0;padding:3px 10px;border-radius:99px;font-size:12px}
+.btn{border-radius:14px;border-color:var(--line)}
+.r3 .btn.pri{border-radius:99px;box-shadow:0 4px 12px rgba(192,83,44,.3)}
+.r3 .btn:not(.pri){background:#faf5ec;border-color:transparent}
+.btn.ok{background:#e1f1e6!important;color:var(--green)}
+.btn.heart.on{background:#fde8e4!important}
+.fab{box-shadow:0 8px 22px rgba(192,83,44,.45)}
+.sheet{background:#fbf6ee;border-radius:26px 26px 0 0}
+.sheet::before{content:'';display:block;width:40px;height:5px;border-radius:9px;background:#ddd0bb;margin:-8px auto 12px}
+.sheet input,.sheet textarea{border-color:transparent;box-shadow:var(--shadow);border-radius:14px}
+.opt{border:0;box-shadow:var(--shadow);border-radius:16px}
+.kbtn{border:0;box-shadow:var(--shadow);border-radius:16px}
+.kbtn.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sheet .btn.pri.wide,.row2b .btn.pri{border-radius:99px;padding:12px;box-shadow:0 4px 12px rgba(192,83,44,.3)}
+.tile{border:0;box-shadow:var(--shadow);border-radius:20px}
+.tile.on{box-shadow:inset 0 0 0 2px var(--accent),var(--shadow)}
+.favs{border:0;border-radius:20px;box-shadow:var(--shadow)}
+.frow{border-color:#f1e9dc}
+.fic{border-radius:16px;background:linear-gradient(135deg,#f6e7d3,#efdcc4)}
+details{border:0;box-shadow:var(--shadow);border-radius:16px}
 @media (min-width:700px){body{box-shadow:0 0 0 1px var(--line)}.sheet{border-radius:22px}}
