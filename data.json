@@ -1,341 +1,354 @@
 {
-  "version": 1,
-  "trips": [
+ "version": 1,
+ "trips": [
+  {
+   "id": "jp-2027-02",
+   "name": "大阪・京都 2027/02",
+   "country": "JP",
+   "tz": "Asia/Tokyo",
+   "anchors": [
     {
-      "id": "jp-2027-02",
-      "name": "大阪・京都 2027/02",
-      "country": "JP",
-      "tz": "Asia/Tokyo",
-      "anchors": [
-        {
-          "id": "a1",
-          "name": "心齋橋日航酒店",
-          "lat": 34.6723,
-          "lng": 135.5005
-        }
-      ]
-    },
-    {
-      "id": "6mpob8ib4",
-      "name": "台中",
-      "country": "",
-      "tz": "Asia/Taipei",
-      "anchors": []
-    },
-    {
-      "id": "l94kmahdz",
-      "name": "台南",
-      "country": "",
-      "tz": "Asia/Taipei",
-      "anchors": []
+     "id": "a1",
+     "name": "心齋橋日航酒店",
+     "lat": 34.6723,
+     "lng": 135.5005
     }
-  ],
-  "tags": [
-    {
-      "id": "food",
-      "label": "美食",
-      "emoji": "🍽️",
-      "group": "list"
-    },
-    {
-      "id": "shop",
-      "label": "必逛",
-      "emoji": "🛍️",
-      "group": "list"
-    },
-    {
-      "id": "ramen",
-      "label": "拉麵",
-      "emoji": "🍜",
-      "group": "kind"
-    },
-    {
-      "id": "sushi",
-      "label": "壽司",
-      "emoji": "🍣",
-      "group": "kind"
-    },
-    {
-      "id": "yakiniku",
-      "label": "燒肉",
-      "emoji": "🥩",
-      "group": "kind"
-    },
-    {
-      "id": "street",
-      "label": "小吃",
-      "emoji": "🍢",
-      "group": "kind"
-    },
-    {
-      "id": "cafe",
-      "label": "咖啡甜點",
-      "emoji": "☕",
-      "group": "kind"
-    },
-    {
-      "id": "drug",
-      "label": "藥妝",
-      "emoji": "💊",
-      "group": "kind"
-    },
-    {
-      "id": "gift",
-      "label": "伴手禮",
-      "emoji": "🎁",
-      "group": "kind"
-    },
-    {
-      "id": "mall",
-      "label": "百貨商場",
-      "emoji": "🏬",
-      "group": "kind"
-    },
-    {
-      "id": "kids",
-      "label": "孩子最愛",
-      "emoji": "🧸",
-      "group": "kind"
-    },
-    {
-      "id": "ys7ffi6cd",
-      "label": "熱炒",
-      "emoji": "🏷️",
-      "group": "kind"
-    },
-    {
-      "id": "sw9y2il1r",
-      "label": "韓式",
-      "emoji": "🏷️",
-      "group": "kind"
-    }
-  ],
-  "places": [
-    {
-      "id": "s1",
-      "tripId": "jp-2027-02",
-      "name": "一蘭 道頓堀店",
-      "nameLocal": "一蘭 道頓堀店",
-      "lat": 34.6688,
-      "lng": 135.5018,
-      "address": "道頓堀",
-      "tags": [
-        "food",
-        "ramen"
-      ],
-      "hours": null,
-      "note": "範例資料：請自行刪除或改成你的清單",
-      "sample": true
-    },
-    {
-      "id": "s2",
-      "tripId": "jp-2027-02",
-      "name": "黑門市場",
-      "nameLocal": "黒門市場",
-      "lat": 34.6624,
-      "lng": 135.5063,
-      "address": "日本橋",
-      "tags": [
-        "food",
-        "street"
-      ],
-      "hours": null,
-      "note": "範例資料：請自行刪除或改成你的清單",
-      "sample": true
-    },
-    {
-      "id": "s3",
-      "tripId": "jp-2027-02",
-      "name": "大丸心齋橋店",
-      "nameLocal": "大丸心斎橋店",
-      "lat": 34.6726,
-      "lng": 135.5011,
-      "address": "心齋橋",
-      "tags": [
-        "shop",
-        "mall",
-        "kids"
-      ],
-      "hours": null,
-      "note": "範例資料：請自行刪除或改成你的清單",
-      "sample": true
-    },
-    {
-      "id": "s4",
-      "tripId": "jp-2027-02",
-      "name": "錦市場",
-      "nameLocal": "錦市場",
-      "lat": 35.005,
-      "lng": 135.7644,
-      "address": "京都",
-      "tags": [
-        "food",
-        "street"
-      ],
-      "hours": null,
-      "note": "範例資料：請自行刪除或改成你的清單",
-      "sample": true
-    },
-    {
-      "id": "lipm4pczr",
-      "tripId": "l94kmahdz",
-      "name": "蚵男",
-      "nameLocal": "",
-      "lat": 23.018802738229695,
-      "lng": 120.20017951726915,
-      "address": "",
-      "tags": [
-        "food",
-        "ys7ffi6cd"
-      ],
-      "hours": null,
-      "hoursText": "",
-      "closed": [],
-      "note": "",
-      "visited": true
-    },
-    {
-      "id": "mdzvwy8bt",
-      "tripId": "l94kmahdz",
-      "name": "川井堂手工麻吉",
-      "lat": 23.01669,
-      "lng": 120.19718,
-      "tags": [
-        "food",
-        "street"
-      ],
-      "srcUrl": "https://www.instagram.com/reel/DgNPPhQzAJu/?fqnt=MTIzbDl3eTFyMjE3Yw==",
-      "hours": [
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ],
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ],
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ],
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ],
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ],
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ],
-        [
-          [
-            "14:00",
-            "21:00"
-          ]
-        ]
-      ],
-      "nameLocal": "",
-      "address": "",
-      "hoursText": "14:00-21:00",
-      "closed": [],
-      "note": "",
-      "addr": "台南市東區青年路435號"
-    },
-    {
-      "id": "17z3wpyq3",
-      "tripId": "6mpob8ib4",
-      "name": "Black韓noodle",
-      "nameLocal": "",
-      "lat": 24.1844015,
-      "lng": 120.6443526,
-      "address": "福星北三街, 西安里, 西屯區, 水湳經貿園區, 臺中市, 407031, 臺灣",
-      "tags": [
-        "food",
-        "sw9y2il1r"
-      ],
-      "hours": [
-        [
-          [
-            "12:00",
-            "22:00"
-          ]
-        ],
-        [
-          [
-            "11:30",
-            "14:00"
-          ],
-          [
-            "15:00",
-            "22:30"
-          ]
-        ],
-        [
-          [
-            "11:30",
-            "14:00"
-          ],
-          [
-            "15:00",
-            "22:30"
-          ]
-        ],
-        [
-          [
-            "11:30",
-            "14:00"
-          ],
-          [
-            "15:00",
-            "22:30"
-          ]
-        ],
-        [
-          [
-            "11:30",
-            "14:00"
-          ],
-          [
-            "15:00",
-            "22:30"
-          ]
-        ],
-        [
-          [
-            "11:30",
-            "14:00"
-          ],
-          [
-            "15:00",
-            "22:30"
-          ]
-        ],
-        [
-          [
-            "12:00",
-            "22:00"
-          ]
-        ]
-      ],
-      "hoursText": "星期五\n山\n相片\n×\n^\n11:30-14:00\n15:00-22:30\n星期六中午-22:00\n星期日中午-22:00\n星期一 11:30-14:00\n15:00-22:30\n星期二11:30-14:00\n15:00-22:30\n星期三11:30-14:00\n15:00-22:30\n星期四11:30-14:00\n15:00-22:30",
-      "closed": [],
-      "note": "",
-      "addr": "407臺中市西屯區西平里福星北三街35號"
-    }
-  ]
+   ]
+  },
+  {
+   "id": "6mpob8ib4",
+   "name": "台中",
+   "country": "",
+   "tz": "Asia/Taipei",
+   "anchors": []
+  },
+  {
+   "id": "l94kmahdz",
+   "name": "台南",
+   "country": "",
+   "tz": "Asia/Taipei",
+   "anchors": []
+  }
+ ],
+ "tags": [
+  {
+   "id": "food",
+   "label": "美食",
+   "emoji": "🍽️",
+   "group": "list"
+  },
+  {
+   "id": "shop",
+   "label": "必逛",
+   "emoji": "🛍️",
+   "group": "list"
+  },
+  {
+   "id": "ramen",
+   "label": "拉麵",
+   "emoji": "🍜",
+   "group": "kind"
+  },
+  {
+   "id": "sushi",
+   "label": "壽司",
+   "emoji": "🍣",
+   "group": "kind"
+  },
+  {
+   "id": "yakiniku",
+   "label": "燒肉",
+   "emoji": "🥩",
+   "group": "kind"
+  },
+  {
+   "id": "street",
+   "label": "小吃",
+   "emoji": "🍢",
+   "group": "kind"
+  },
+  {
+   "id": "cafe",
+   "label": "咖啡甜點",
+   "emoji": "☕",
+   "group": "kind"
+  },
+  {
+   "id": "drug",
+   "label": "藥妝",
+   "emoji": "💊",
+   "group": "kind"
+  },
+  {
+   "id": "gift",
+   "label": "伴手禮",
+   "emoji": "🎁",
+   "group": "kind"
+  },
+  {
+   "id": "mall",
+   "label": "百貨商場",
+   "emoji": "🏬",
+   "group": "kind"
+  },
+  {
+   "id": "kids",
+   "label": "孩子最愛",
+   "emoji": "🧸",
+   "group": "kind"
+  },
+  {
+   "id": "ys7ffi6cd",
+   "label": "熱炒",
+   "emoji": "🏷️",
+   "group": "kind"
+  },
+  {
+   "id": "sw9y2il1r",
+   "label": "韓式",
+   "emoji": "🏷️",
+   "group": "kind"
+  }
+ ],
+ "places": [
+  {
+   "id": "s1",
+   "tripId": "jp-2027-02",
+   "name": "一蘭 道頓堀店",
+   "nameLocal": "一蘭 道頓堀店",
+   "lat": 34.6688,
+   "lng": 135.5018,
+   "address": "道頓堀",
+   "tags": [
+    "food",
+    "ramen"
+   ],
+   "hours": null,
+   "note": "範例資料：請自行刪除或改成你的清單",
+   "sample": true
+  },
+  {
+   "id": "s2",
+   "tripId": "jp-2027-02",
+   "name": "黑門市場",
+   "nameLocal": "黒門市場",
+   "lat": 34.6624,
+   "lng": 135.5063,
+   "address": "日本橋",
+   "tags": [
+    "food",
+    "street"
+   ],
+   "hours": null,
+   "note": "範例資料：請自行刪除或改成你的清單",
+   "sample": true
+  },
+  {
+   "id": "s3",
+   "tripId": "jp-2027-02",
+   "name": "大丸心齋橋店",
+   "nameLocal": "大丸心斎橋店",
+   "lat": 34.6726,
+   "lng": 135.5011,
+   "address": "心齋橋",
+   "tags": [
+    "shop",
+    "mall",
+    "kids"
+   ],
+   "hours": null,
+   "note": "範例資料：請自行刪除或改成你的清單",
+   "sample": true
+  },
+  {
+   "id": "s4",
+   "tripId": "jp-2027-02",
+   "name": "錦市場",
+   "nameLocal": "錦市場",
+   "lat": 35.005,
+   "lng": 135.7644,
+   "address": "京都",
+   "tags": [
+    "food",
+    "street"
+   ],
+   "hours": null,
+   "note": "範例資料：請自行刪除或改成你的清單",
+   "sample": true
+  },
+  {
+   "id": "lipm4pczr",
+   "tripId": "l94kmahdz",
+   "name": "蚵男",
+   "nameLocal": "",
+   "lat": 23.018802738229695,
+   "lng": 120.20017951726915,
+   "address": "",
+   "tags": [
+    "food",
+    "ys7ffi6cd"
+   ],
+   "hours": null,
+   "hoursText": "",
+   "closed": [],
+   "note": "",
+   "visited": true
+  },
+  {
+   "id": "mdzvwy8bt",
+   "tripId": "l94kmahdz",
+   "name": "川井堂手工麻吉",
+   "lat": 23.01669,
+   "lng": 120.19718,
+   "tags": [
+    "food",
+    "street"
+   ],
+   "srcUrl": "https://www.instagram.com/reel/DgNPPhQzAJu/?fqnt=MTIzbDl3eTFyMjE3Yw==",
+   "hours": [
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ],
+    [
+     [
+      "14:00",
+      "21:00"
+     ]
+    ]
+   ],
+   "nameLocal": "",
+   "address": "",
+   "hoursText": "14:00-21:00",
+   "closed": [],
+   "note": "",
+   "addr": "台南市東區青年路435號"
+  },
+  {
+   "id": "17z3wpyq3",
+   "tripId": "6mpob8ib4",
+   "name": "Black韓noodle",
+   "nameLocal": "",
+   "lat": 24.1844015,
+   "lng": 120.6443526,
+   "address": "福星北三街, 西安里, 西屯區, 水湳經貿園區, 臺中市, 407031, 臺灣",
+   "tags": [
+    "food",
+    "sw9y2il1r"
+   ],
+   "hours": [
+    [
+     [
+      "12:00",
+      "22:00"
+     ]
+    ],
+    [
+     [
+      "11:30",
+      "14:00"
+     ],
+     [
+      "15:00",
+      "22:30"
+     ]
+    ],
+    [
+     [
+      "11:30",
+      "14:00"
+     ],
+     [
+      "15:00",
+      "22:30"
+     ]
+    ],
+    [
+     [
+      "11:30",
+      "14:00"
+     ],
+     [
+      "15:00",
+      "22:30"
+     ]
+    ],
+    [
+     [
+      "11:30",
+      "14:00"
+     ],
+     [
+      "15:00",
+      "22:30"
+     ]
+    ],
+    [
+     [
+      "11:30",
+      "14:00"
+     ],
+     [
+      "15:00",
+      "22:30"
+     ]
+    ],
+    [
+     [
+      "12:00",
+      "22:00"
+     ]
+    ]
+   ],
+   "hoursText": "星期五\n山\n相片\n×\n^\n11:30-14:00\n15:00-22:30\n星期六中午-22:00\n星期日中午-22:00\n星期一 11:30-14:00\n15:00-22:30\n星期二11:30-14:00\n15:00-22:30\n星期三11:30-14:00\n15:00-22:30\n星期四11:30-14:00\n15:00-22:30",
+   "closed": [],
+   "note": "",
+   "addr": "407臺中市西屯區西平里福星北三街35號"
+  },
+  {
+   "id": "zw2le37be",
+   "tripId": "6mpob8ib4",
+   "name": "（待命名）",
+   "lat": null,
+   "lng": null,
+   "tags": [
+    "food"
+   ],
+   "pending": true,
+   "srcUrl": "https://www.instagram.com/reel/Df4FiEavvXB/?lqvp=MTRsczQwbWp3aHdncw==",
+   "hours": null
+  }
+ ]
 }
