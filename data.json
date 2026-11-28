@@ -402,15 +402,20 @@
   {
    "id": "1lpw6rst0",
    "tripId": "6mpob8ib4",
-   "name": "（待命名）",
-   "lat": null,
-   "lng": null,
+   "name": "韓大王馬鈴薯豬骨湯",
+   "lat": 24.1837091,
+   "lng": 120.6440198,
    "tags": [
     "food"
    ],
-   "pending": true,
    "srcUrl": "https://www.instagram.com/p/DgDCBqSgmJI/?knvt=MW9oMDJ2OGppNHFwcA==",
-   "hours": null
+   "hours": null,
+   "nameLocal": "",
+   "address": "福星北二街, 西安里, 西屯區, 水湳經貿園區, 臺中市, 407031, 臺灣",
+   "hoursText": "",
+   "closed": [],
+   "note": "",
+   "addr": "40741臺中市西屯區西平里福星北二街11號"
   }
  ]
 }
