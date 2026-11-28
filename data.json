@@ -534,15 +534,20 @@
   {
    "id": "ibh2rk8qq",
    "tripId": "6mpob8ib4",
-   "name": "（待命名）",
-   "lat": null,
-   "lng": null,
+   "name": "双漁堂",
+   "lat": 24.1573884,
+   "lng": 120.6811528,
    "tags": [
     "food"
    ],
-   "pending": true,
    "srcUrl": "https://www.instagram.com/reel/DgRV77QqRSq/?avpt=MWJvYndzemM5bmtwcw==",
-   "hours": null
+   "hours": null,
+   "nameLocal": "",
+   "address": "學士路, 邱厝里, 北區, 臺中市, 404, 臺灣",
+   "hoursText": "",
+   "closed": [],
+   "note": "",
+   "addr": "404臺中市北區建興里學士路194號"
   }
  ]
 }
