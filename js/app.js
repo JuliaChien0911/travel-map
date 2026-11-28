@@ -233,9 +233,15 @@ function pcard(p) {
       <button class="btn danger" data-act="pend-del">刪除</button></div></article>`;
 }
 
+// 新增類型沒給 emoji 時，依名稱猜一個
+const EMO = [[/韓/, '🍲'], [/火鍋|鍋/, '🍲'], [/炒/, '🥘'], [/拉麵|麵/, '🍜'], [/壽司|生魚/, '🍣'], [/日式|定食|便當/, '🍱'], [/燒肉|牛排|牛/, '🥩'], [/燒烤|串/, '🍢'],
+  [/義|義大利|pasta/i, '🍝'], [/披薩|pizza/i, '🍕'], [/漢堡|美式/, '🍔'], [/早午|鬆餅/, '🥞'], [/咖啡/, '☕'], [/甜|蛋糕/, '🍰'], [/冰/, '🍧'], [/茶|飲/, '🧋'],
+  [/麵包|烘焙|可頌/, '🥐'], [/海鮮|蝦/, '🦐'], [/素|沙拉/, '🥗'], [/酒|居酒屋/, '🍺'], [/泰|越|南洋/, '🍛'], [/飯/, '🍚'], [/衣|服飾/, '👗'], [/書/, '📚'], [/雜貨|選物/, '🧺'], [/景|拍照/, '📷'], [/住|飯店/, '🏨']];
+const guessEmoji = t => (EMO.find(([r]) => r.test(t)) || [0, '📍'])[1];
 function thumbOf(p) {
   const lt = p.tags.map(tagOf).find(t => t?.group === 'list'), kd = p.tags.map(tagOf).find(t => t?.group === 'kind');
-  return `<div class="thumb ${lt?.id === 'shop' ? 'shop' : 'food'}">${(kd || lt)?.emoji || '📍'}</div>`;
+  const e = kd && kd.emoji !== '🏷️' ? kd.emoji : lt?.emoji || '📍';
+  return `<div class="thumb ${lt?.id === 'shop' ? 'shop' : 'food'}">${e}</div>`;
 }
 function card({ p, d, st, m }) {
   const open = S.expanded === p.id;
@@ -336,7 +342,7 @@ async function drawMap(list, o) {
   list.forEach(x => {
     const first = tagOf(x.p.tags.find(i => tagOf(i)?.group === 'list'));
     const kd = tagOf(x.p.tags.find(i => tagOf(i)?.group === 'kind'));
-    L.marker([x.p.lat, x.p.lng], { icon: L.divIcon({ className: '', html: `<div class="mpin ${first?.id === 'shop' ? 'shop' : 'food'}"><span>${(kd || first)?.emoji || '📍'}</span></div>`, iconSize: [34, 42], iconAnchor: [17, 40], popupAnchor: [0, -36] }) })
+    L.marker([x.p.lat, x.p.lng], { icon: L.divIcon({ className: '', html: `<div class="mpin ${first?.id === 'shop' ? 'shop' : 'food'}"><span>${kd && kd.emoji !== '🏷️' ? kd.emoji : first?.emoji || '📍'}</span></div>`, iconSize: [34, 42], iconAnchor: [17, 40], popupAnchor: [0, -36] }) })
       .addTo(map).bindPopup(`<b>${esc(x.p.name)}</b><br>${x.d != null ? fmtDist(x.d) + '　' : ''}<a href="${navUrl(x.p)}" target="_blank" rel="noopener">導航</a>`);
     pts.push([x.p.lat, x.p.lng]);
   });
@@ -571,7 +577,7 @@ const H = {
   'f-addkind': () => {
     const F = S.sheet.F, raw = (F.newKind || '').trim(); if (!raw) return;
     const m = raw.match(/^(\p{Extended_Pictographic}️?)\s*(.*)$/u);
-    const tag = { id: uid(), label: (m ? m[2] : raw) || raw, emoji: m ? m[1] : '🏷️', group: 'kind' };
+    const tag = { id: uid(), label: (m ? m[2] : raw) || raw, emoji: m ? m[1] : guessEmoji(raw), group: 'kind' };
     S.data.tags.push(tag); F.kinds.push(tag.id); F.newKind = ''; persist(); renderSheet();
   },
   'place-save': () => {
