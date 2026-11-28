@@ -68,6 +68,8 @@ function filtered(o) {
   let ps = S.data.places.filter(p => p.tripId === S.tripId && p.lat != null);
   if (S.list !== 'all') ps = ps.filter(p => p.tags.includes(S.list));
   if (S.kinds.size) ps = ps.filter(p => p.tags.some(x => S.kinds.has(x)));
+  const q = (S.q || '').trim().toLowerCase();
+  if (q) ps = ps.filter(p => [p.name, p.nameLocal, p.note, p.addr, ...p.tags.map(i => tagOf(i)?.label)].some(v => v && String(v).toLowerCase().includes(q)));
   ps = ps.map(p => ({ p, d: o ? dist(o, p) : null, st: statusOf(p.hours, now), m: mark(p) }));
   if (S.openOnly) ps = ps.filter(x => x.st.state === 'open' || x.st.state === 'closing');
   if (S.visit === 'unvisited') ps = ps.filter(x => !x.m.visited);
@@ -95,43 +97,72 @@ function render() {
   const kinds = S.data.tags.filter(x => x.group === 'kind' && (used.has(x.id) || S.kinds.has(x.id)));
   const hh = `週${DAYS[now.day]} ${String(Math.floor(now.min / 60)).padStart(2, '0')}:${String(now.min % 60).padStart(2, '0')}`;
   const hasTok = store.hasToken(), nf = (S.openOnly ? 1 : 0) + (S.visit !== 'all' ? 1 : 0) + (S.radius ? 1 : 0) + S.kinds.size;
+  const tab = S.view === 'fav' ? 'fav' : S.view === 'map' ? 'map' : 'home';
+  const oLabel = o ? o.label : (S.origin?.type === 'gps' ? '我的位置' : '選擇出發點');
   root.innerHTML = `
   <header class="top">
-    <button class="tripbtn" data-act="trips"><span class="serif">${esc(t.name)}</span><small>現地 ${hh} ▾</small></button>
+    <div class="tl">
+      <button class="tripbtn" data-act="trips">${IC.pin}<b>${esc(t.name)}</b><span class="car">▾</span></button>
+      <button class="orig" data-act="origin">${esc(S.gpsMsg || oLabel)} · ${hh}${S.origin?.type === 'gps' ? ' <span data-act="regps">↻</span>' : ' ▾'}</button>
+    </div>
     <div class="top-r">
       <span id="savest" class="savest ${S.saveSt}">${saveText()}</span>
       ${hasTok ? `<button class="pill-btn ${S.edit ? 'on' : ''}" data-act="toggle-edit">${S.edit ? '✎ 編輯中' : '檢視'}</button>` : ''}
       <button class="icon-btn" data-act="help" aria-label="使用說明">？</button>
-      <button class="icon-btn" data-act="settings" aria-label="設定">⚙︎</button>
+      <button class="icon-btn" data-act="settings" aria-label="設定">${IC.gear}</button>
     </div>
   </header>
-  ${S.view === 'fav' ? '' : `<section class="origin" data-act="origin">
-    <span class="pin">📍</span>
-    <span class="otxt"><b>${esc(o ? o.label : (S.origin?.type === 'gps' ? '我的位置' : '選擇出發點'))}</b>
-      <small>${S.gpsMsg ? esc(S.gpsMsg) : (o ? '依距離由近到遠' : (S.origin?.type === 'gps' ? '尚未取得定位，點此重試' : '點此選擇基地點或使用 GPS'))}</small></span>
-    ${S.origin?.type === 'gps' ? '<button class="icon-btn" data-act="regps" aria-label="重新定位">↻</button>' : ''}
-    <span class="car">▾</span>
-  </section>`}
+  ${tab === 'fav' ? '' : `<label class="search">${IC.search}<input id="hq" type="search" placeholder="搜尋店名、類型…" value="${esc(S.q || '')}" autocomplete="off"></label>`}
   <nav class="seg">
-    <button class="${S.list === 'all' ? 'on' : ''}" data-act="list" data-v="all">全部</button>
+    <button class="${S.list === 'all' ? 'on' : ''}" data-act="list" data-v="all">${IC.grid} 全部</button>
     ${lists.map(l => `<button class="${S.list === l.id ? 'on' : ''}" data-act="list" data-v="${l.id}">${l.emoji} ${esc(l.label)}</button>`).join('')}
+    ${tab === 'fav' ? '' : `<button class="filt ${nf ? 'on' : ''}" data-act="filter" aria-label="篩選">${IC.filter}${nf ? `<i>${nf}</i>` : ''}</button>`}
   </nav>
-  ${S.view === 'fav' ? '' : `<div class="chips scroll">
-    <button class="chip filt ${nf ? 'on' : ''}" data-act="filter">☰ 篩選${nf ? '・' + nf : ''}</button>
-    ${S.openOnly ? '<button class="chip act" data-act="rm-open">🟢 營業中 ×</button>' : ''}
+  ${tab !== 'fav' && nf ? `<div class="chips scroll">
+    ${S.openOnly ? '<button class="chip act" data-act="rm-open">營業中 ×</button>' : ''}
     ${S.visit !== 'all' ? `<button class="chip act" data-act="rm-visit">${VISIT[S.visit]} ×</button>` : ''}
     ${S.radius ? `<button class="chip act" data-act="rm-rad">${fmtDist(S.radius)} 內 ×</button>` : ''}
     ${[...S.kinds].map(tagOf).filter(Boolean).map(k => `<button class="chip act" data-act="f-kind" data-v="${k.id}">${k.emoji} ${esc(k.label)} ×</button>`).join('')}
-  </div>`}
-  <div class="bar"><span>${S.view === 'fav' ? '' : (S.pendingView ? pend.length : list.length) + ' 間'}${S.edit && S.view !== 'fav' ? ` <button class="chip ${S.pendingView ? 'on' : ''}" data-act="pend">📥 待整理 ${pend.length}</button>` : ''}</span>
-    <span class="vt"><button class="${S.view === 'list' ? 'on' : ''}" data-act="view" data-v="list">清單</button><button class="${S.view === 'map' ? 'on' : ''}" data-act="view" data-v="map">地圖</button><button class="${S.view === 'fav' ? 'on' : ''}" data-act="view" data-v="fav">❤︎ 收藏</button></span></div>
+  </div>` : ''}
   <main>
-    ${S.view === 'fav' ? favHtml() : `${S.view === 'map' && !S.pendingView ? '<div id="map"></div>' : ''}
-    <div class="cards">${S.pendingView ? (pend.map(pcard).join('') || '<p class="muted pad">沒有待整理的店。</p>') : list.length ? list.map(x => card(x)).join('') : `<p class="muted pad">${S.data.places.some(p => p.tripId === t.id) ? '沒有符合條件的店家，放寬一下篩選看看。' : '這趟旅程還沒有店家。' + (S.edit ? '點右下角 ＋ 新增。' : '')}</p>`}</div>`}
+    ${tab === 'fav' ? favHtml() : `
+    ${S.pendingView ? '' : `<div id="map" class="${tab === 'map' ? 'big' : 'mini'}"></div>`}
+    <div class="sec"><h2>${S.pendingView ? '📥 待整理' : (o ? '附近店家' : '店家')} <small id="cnt">(${S.pendingView ? pend.length : list.length})</small></h2>
+      ${S.edit ? `<button class="chip ${S.pendingView ? 'on' : ''}" data-act="pend">📥 待整理 ${pend.length}</button>` : ''}</div>
+    <div class="cards" id="cards">${S.pendingView ? (pend.map(pcard).join('') || '<p class="muted pad">沒有待整理的店。</p>') : cardsHtml(list, t)}</div>`}
   </main>
+  <nav class="tabbar">
+    <button class="${tab === 'home' ? 'on' : ''}" data-act="view" data-v="list">${IC.home}<small>首頁</small></button>
+    <button class="${tab === 'map' ? 'on' : ''}" data-act="view" data-v="map">${IC.map}<small>地圖</small></button>
+    <button class="${tab === 'fav' ? 'on' : ''}" data-act="view" data-v="fav">${IC.bookmark}<small>收藏</small></button>
+  </nav>
   ${S.edit ? '<button class="fab fab2" data-act="quick-new" aria-label="快速收藏">⚡</button><button class="fab" data-act="place-new" aria-label="新增店家">＋</button>' : ''}`;
-  if (S.view === 'map' && !S.pendingView) drawMap(list, o);
+  if (tab !== 'fav' && !S.pendingView) drawMap(list, o);
 }
+function cardsHtml(list, t) {
+  return list.length ? list.map(x => card(x)).join('') : `<p class="muted pad">${S.q ? '找不到符合的店家。' : S.data.places.some(p => p.tripId === t.id) ? '沒有符合條件的店家，放寬一下篩選看看。' : '這趟旅程還沒有店家。' + (S.edit ? '點右下角 ＋ 新增。' : '')}</p>`;
+}
+function refreshCards() {
+  const t = trip(), o = originPt(), list = filtered(o), el = $('#cards'); if (!el || S.pendingView) return;
+  el.innerHTML = cardsHtml(list, t); const c = $('#cnt'); if (c) c.textContent = `(${list.length})`;
+  drawMap(list, o, true);
+}
+
+const svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const IC = {
+  pin: svg('<path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/>'),
+  gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
+  search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  grid: svg('<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>'),
+  filter: svg('<path d="M4 6h16M7 12h10M10 18h4"/>'),
+  home: svg('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),
+  map: svg('<path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/>'),
+  bookmark: svg('<path d="M6 3h12v18l-6-4-6 4z"/>'),
+  nav: svg('<path d="M3 11 21 3l-8 18-2-8z"/>'),
+  check: svg('<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'),
+  clock: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  edit: svg('<path d="M4 20h4L19 9l-4-4L4 16z"/>')
+};
 
 // 從剪貼簿帶入：可能是連結，也可能是「店名＋連結」（例如 Google 地圖分享文字）
 function parseClip(t) {
@@ -203,28 +234,36 @@ function pcard(p) {
       <button class="btn danger" data-act="pend-del">刪除</button></div></article>`;
 }
 
+function thumbOf(p) {
+  const lt = p.tags.map(tagOf).find(t => t?.group === 'list'), kd = p.tags.map(tagOf).find(t => t?.group === 'kind');
+  return `<div class="thumb ${lt?.id === 'shop' ? 'shop' : 'food'}">${(kd || lt)?.emoji || '📍'}</div>`;
+}
 function card({ p, d, st, m }) {
   const open = S.expanded === p.id;
-  const kindTxt = p.tags.map(tagOf).filter(x => x && x.group === 'kind').map(x => x.label).join('・');
-  return `<article class="card ${m.visited ? 'done' : ''}" data-id="${p.id}">
-    <div class="r1" data-act="expand">
-      <div class="nm"><h3>${emojiOf(p.tags.filter(i => tagOf(i)?.group === 'list'))} ${esc(p.name)}</h3>
-        ${p.nameLocal && p.nameLocal !== p.name ? `<p class="sub">${esc(p.nameLocal)}</p>` : ''}</div>
-      ${d != null ? `<div class="ds"><b>${fmtDist(d)}</b><small>步行約 ${walkMin(d)} 分</small></div>` : ''}
+  const kinds = p.tags.map(tagOf).filter(x => x && x.group === 'kind'), lt = p.tags.map(tagOf).find(x => x?.group === 'list');
+  const meta = [kinds.map(x => x.label).join('・') || lt?.label, d != null ? fmtDist(d) : ''].filter(Boolean).join(' · ');
+  return `<article class="card ${m.visited ? 'done' : ''} ${open ? 'open' : ''}" data-id="${p.id}">
+    <div class="crow">
+      <div data-act="expand">${thumbOf(p)}</div>
+      <div class="cinfo" data-act="expand">
+        <h3>${esc(p.name)}${m.want ? ' <span class="wh">❤</span>' : ''}</h3>
+        <p class="meta">${esc(meta)}${d != null ? ` · 步行 ${walkMin(d)} 分` : ''}</p>
+        <span class="st ${st.state}">${IC.clock}${esc(st.text)}</span>
+      </div>
+      <div class="cact">
+        <a class="rbtn" href="${navUrl(p)}" target="_blank" rel="noopener">${IC.nav}<small>導航</small></a>
+        <button class="rbtn ${m.visited ? 'ok' : ''}" data-act="visit">${IC.check}<small>${m.visited ? '去過了' : '去過'}</small></button>
+      </div>
     </div>
-    <div class="r2"><span class="st ${st.state}">${esc(st.text)}</span>${kindTxt ? `<span class="kt">${esc(kindTxt)}</span>` : ''}</div>
-    ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
-    <div class="r3">
-      <a class="btn pri" href="${navUrl(p)}" target="_blank" rel="noopener">🧭 導航</a>
-      <button class="btn ${m.visited ? 'ok' : ''}" data-act="visit">${m.visited ? '✓ 去過了' : '○ 去過'}</button>
-      <button class="btn heart ${m.want ? 'on' : ''}" data-act="want" aria-label="想去">${m.want ? '❤️' : '♡'}</button>
-      ${S.edit ? '<button class="btn" data-act="place-edit">✎</button>' : ''}
-    </div>
-    ${m.visited ? `<input class="rv" data-act="review" maxlength="80" placeholder="寫一句短評…" value="${esc(m.review)}">` : ''}
+    ${m.visited && (open || m.review) ? `<input class="rv" data-act="review" maxlength="80" placeholder="寫一句短評…" value="${esc(m.review)}">` : ''}
     ${open ? `<div class="more">
+      ${p.nameLocal && p.nameLocal !== p.name ? `<p class="muted">${esc(p.nameLocal)}</p>` : ''}
+      ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
       ${p.addr || p.address ? `<p>📍 ${esc(p.addr || p.address)}</p>` : ''}
       ${p.hours ? `<p>🕒 ${summarize(p.hours).map(esc).join('<br>')}</p>` : '<p class="muted">🕒 未填營業時間</p>'}
       ${p.gmapsUrl ? `<p><a href="${esc(p.gmapsUrl)}" target="_blank" rel="noopener">在 Google 地圖查看評論 ↗</a></p>` : ''}
+      <div class="r3"><button class="btn heart ${m.want ? 'on' : ''}" data-act="want">${m.want ? '❤️ 想去' : '♡ 想去'}</button>
+        ${S.edit ? `<button class="btn" data-act="place-edit">${IC.edit} 編輯</button>` : ''}</div>
     </div>` : ''}
   </article>`;
 }
@@ -245,7 +284,7 @@ function favHtml() {
   <div class="favs">${rows.map(({ p, m }) => {
     const lt = p.tags.map(tagOf).find(t => t?.group === 'list'), kd = p.tags.map(tagOf).filter(t => t?.group === 'kind').map(t => t.label).join('・');
     return `<div class="frow ${m.visited ? 'done' : ''}" data-id="${p.id}">
-      <div class="fic">${lt?.emoji || '📍'}</div>
+      ${thumbOf(p)}
       <div class="ftx" data-act="fav-open"><b>${esc(p.name)}</b><small>${esc([kd, tname(p.tripId)].filter(Boolean).join('・'))}</small>
         <span class="badges">${lt ? `<em class="bd ${lt.id}">${esc(lt.label)}</em>` : ''}${m.visited ? '<em class="bd ok">去過</em>' : ''}</span></div>
       <button class="hbtn" data-act="want" aria-label="想去">${m.want ? '❤️' : '♡'}</button>
@@ -297,11 +336,12 @@ async function drawMap(list, o) {
   const pts = [];
   list.forEach(x => {
     const first = tagOf(x.p.tags.find(i => tagOf(i)?.group === 'list'));
-    L.circleMarker([x.p.lat, x.p.lng], { radius: 10, color: '#fff', weight: 2, fillColor: first?.id === 'shop' ? '#2d6cdf' : '#b4502d', fillOpacity: 1 })
+    const kd = tagOf(x.p.tags.find(i => tagOf(i)?.group === 'kind'));
+    L.marker([x.p.lat, x.p.lng], { icon: L.divIcon({ className: '', html: `<div class="mpin ${first?.id === 'shop' ? 'shop' : 'food'}"><span>${(kd || first)?.emoji || '📍'}</span></div>`, iconSize: [34, 42], iconAnchor: [17, 40], popupAnchor: [0, -36] }) })
       .addTo(map).bindPopup(`<b>${esc(x.p.name)}</b><br>${x.d != null ? fmtDist(x.d) + '　' : ''}<a href="${navUrl(x.p)}" target="_blank" rel="noopener">導航</a>`);
     pts.push([x.p.lat, x.p.lng]);
   });
-  if (o) { L.circleMarker([o.lat, o.lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#1a1a1a', fillOpacity: 1 }).addTo(map); pts.push([o.lat, o.lng]); }
+  if (o) { L.circleMarker([o.lat, o.lng], { radius: 16, stroke: false, fillColor: '#2d6cdf', fillOpacity: .18 }).addTo(map); L.circleMarker([o.lat, o.lng], { radius: 7, color: '#fff', weight: 3, fillColor: '#2d6cdf', fillOpacity: 1 }).addTo(map); pts.push([o.lat, o.lng]); }
   if (pts.length > 1) map.fitBounds(pts, { padding: [30, 30], maxZoom: 16 });
   else if (pts.length === 1) map.setView(pts[0], 15);
 }
@@ -652,6 +692,7 @@ document.addEventListener('click', e => {
   fn(el, el.closest('[data-id]')?.dataset.id, e);
 });
 document.addEventListener('input', e => {
+  if (e.target.id === 'hq') { S.q = e.target.value; refreshCards(); return; }
   const el = e.target; if (!el.dataset.f || !S.sheet) return;
   S.sheet.F[el.dataset.f] = el.value;
   if (el.dataset.f === 'hoursText') { const hp = $('#hp'); if (hp) hp.innerHTML = hoursPreview(S.sheet.F); }
