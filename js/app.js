@@ -112,11 +112,10 @@ function render() {
       <button class="icon-btn" data-act="settings" aria-label="設定">${IC.gear}</button>
     </div>
   </header>
-  ${tab === 'fav' ? '' : `<label class="search">${IC.search}<input id="hq" type="search" placeholder="搜尋店名、類型…" value="${esc(S.q || '')}" autocomplete="off"></label>`}
+  ${tab === 'fav' ? '' : `<div class="search">${IC.search}<input id="hq" type="search" placeholder="搜尋店名、類型…" value="${esc(S.q || '')}" autocomplete="off"><button class="filt ${nf ? 'on' : ''}" data-act="filter" aria-label="篩選">${IC.filter}${nf ? `<i>${nf}</i>` : ''}</button></div>`}
   <nav class="seg">
     <button class="${S.list === 'all' ? 'on' : ''}" data-act="list" data-v="all">${IC.grid} 全部</button>
     ${lists.map(l => `<button class="${S.list === l.id ? 'on' : ''}" data-act="list" data-v="${l.id}">${l.emoji} ${esc(l.label)}</button>`).join('')}
-    ${tab === 'fav' ? '' : `<button class="filt ${nf ? 'on' : ''}" data-act="filter" aria-label="篩選">${IC.filter}${nf ? `<i>${nf}</i>` : ''}</button>`}
   </nav>
   ${tab !== 'fav' && nf ? `<div class="chips scroll">
     ${S.openOnly ? '<button class="chip act" data-act="rm-open">營業中 ×</button>' : ''}
@@ -320,14 +319,14 @@ let map = null, leaflet = null;
 function loadLeaflet() {
   if (window.L) return Promise.resolve();
   return leaflet ||= new Promise((res, rej) => {
-    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'js/vendor/leaflet.css'; document.head.appendChild(l);
-    const s = document.createElement('script'); s.src = 'js/vendor/leaflet.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s);
-  });
+    if (!document.querySelector('link[href$="leaflet.css"]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'js/vendor/leaflet.css'; document.head.appendChild(l); }
+    const s = document.createElement('script'); s.src = 'js/vendor/leaflet.js?r=' + Date.now(); s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  }).catch(e => { leaflet = null; throw e; });   // 失敗不要卡住，下次再試
 }
 const baseTiles = () => window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
 async function drawMap(list, o) {
   const el = $('#map'); if (!el) return;
-  try { await loadLeaflet(); } catch { el.innerHTML = '<p class="muted pad">地圖載入失敗</p>'; return; }
+  try { await loadLeaflet(); } catch { try { await loadLeaflet(); } catch { el.innerHTML = '<p class="muted pad">地圖載入失敗（網路不穩）<br><button class="btn" data-act="map-retry">重試</button></p>'; return; } }
   if (!document.body.contains(el)) return;
   if (map) { map.remove(); map = null; }
   const L = window.L;
@@ -487,7 +486,7 @@ function pickHtml() {
 }
 async function initPick() {
   const el = $('#pickmap'); if (!el) return;
-  try { await loadLeaflet(); } catch { el.innerHTML = '<p class="muted pad">地圖載入失敗</p>'; return; }
+  try { await loadLeaflet(); } catch { try { await loadLeaflet(); } catch { el.innerHTML = '<p class="muted pad">地圖載入失敗（網路不穩）<br><button class="btn" data-act="map-retry">重試</button></p>'; return; } }
   const F = S.sheet.F, L = window.L, o = originPt() || trip()?.anchors[0];
   const c = F.lat != null ? [F.lat, F.lng] : [o?.lat ?? 35.68, o?.lng ?? 139.76];
   if (pickMap) { pickMap.remove(); pickMap = null; }
@@ -510,6 +509,7 @@ const H = {
   'rm-visit': () => { S.visit = 'all'; render(); },
   'rm-rad': () => { S.radius = 0; saveUi(); render(); },
   want: (el, id) => { const p = placeOf(id), m = mark(p); setMark(p, { want: !m.want }); render(); toast(m.want ? '已取消想去' : '❤️ 加入想去'); },
+  'map-retry': () => S.sheet ? renderSheet() : render(),
   'fav-all': (el) => { S.favAll = el.dataset.v === '1'; render(); },
   'fav-stat': (el) => { S.favStat = el.dataset.v; render(); },
   'fav-open': (el, id) => {

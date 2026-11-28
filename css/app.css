@@ -247,4 +247,22 @@ svg{width:1em;height:1em;flex:none}
 .thumb{width:58px;height:58px;font-size:30px}
 .rv,.more{margin-left:70px}.rv{width:calc(100% - 70px)}
 .tile b{font-family:var(--sans);font-weight:800}.fscope .chip.on{border-color:transparent}
+/* v2b：窄螢幕（iPhone 放大顯示 320px）也放得下 */
+.search{padding:6px 6px 6px 16px}
+.search .filt{flex:none;position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--paper);color:var(--ink)}
+.search .filt svg{font-size:19px}.search .filt.on{background:var(--accent);color:#fff}
+.search .filt i{font-style:normal;position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--ink);color:#fff;font-size:11px;display:grid;place-items:center}
+.seg button{padding:8px 14px}
+.crow{gap:10px}.cact{gap:6px}
+.cinfo .st{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-flex}
+#map .pad{padding-top:60px}
+@media (max-width:360px){
+  .tripbtn b{font-size:18px}.top .savest{display:none}
+  .thumb{width:48px;height:48px;font-size:24px;border-radius:13px}
+  .rbtn svg{width:36px;height:36px;padding:9px}.rbtn small{font-size:10px}
+  .cinfo h3{font-size:16px}.card{padding:12px}
+  .rv,.more{margin-left:0}.rv{width:100%}
+  .seg button{padding:7px 12px;font-size:14px}
+  .cinfo .st{font-size:11px;padding:3px 7px}.cact{gap:4px}
+}
 @media (min-width:700px){body{box-shadow:0 0 0 1px var(--line)}.sheet{border-radius:22px}}
