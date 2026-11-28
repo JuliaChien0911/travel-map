@@ -340,15 +340,20 @@
   {
    "id": "zw2le37be",
    "tripId": "6mpob8ib4",
-   "name": "（待命名）",
-   "lat": null,
-   "lng": null,
+   "name": "南田牧野家",
+   "lat": 24.1583629,
+   "lng": 120.6748524,
    "tags": [
     "food"
    ],
-   "pending": true,
    "srcUrl": "https://www.instagram.com/reel/Df4FiEavvXB/?lqvp=MTRsczQwbWp3aHdncw==",
-   "hours": null
+   "hours": null,
+   "nameLocal": "",
+   "address": "美德街, 育德里, 北區, 臺中市, 404, 臺灣",
+   "hoursText": "",
+   "closed": [],
+   "note": "",
+   "addr": "404臺中市北區育德里美德街365號"
   }
  ]
 }
